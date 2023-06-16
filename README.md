@@ -47,7 +47,7 @@ test.clusters.hc(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2), p
 
 ### Selective inference after $k$-means clustering
 
-The function [test.clusters.km](https://github.com/gonzalez-delgado/PCIdep/blob/master/R/test.clusters.km.R) adapts the framework presented in [KMeansInference](https://github.com/yiqunchen/KmeansInference) to the general matrix normal model. It allows selective inference after $k$-means clustering. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error.
+The function [test.clusters.km](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.km.R) adapts the framework presented in [KMeansInference](https://github.com/yiqunchen/KmeansInference) to the general matrix normal model. It allows selective inference after $k$-means clustering. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error.
 
 #### Example
 
