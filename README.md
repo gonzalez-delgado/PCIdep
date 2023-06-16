@@ -6,9 +6,9 @@ $$
 \mathbf{X}\sim\mathcal{MN}_{n\times p}(\boldsymbol\mu,\mathbf{U},\mathbf{\Sigma}),
 $$
 
-where $\boldsymbol\mu\in\mathcal{M}_{n\times p}(\mathbb{R})$ and $\mathbf{U}\in\mathcal{M}_{n\times n}(\mathbb{R})$ and $\mathbf{\Sigma}\in\mathcal{M}_{p\times p}(\mathbb{R})$ are positive definite matrices encoding the depence structure between observations and features respectively.
+where $\boldsymbol{\mu}\in\mathcal{M}_{n\times p}(\mathbb{R})$ and $\mathbf{U}\in\mathcal{M}_{n\times n}(\mathbb{R})$ and $\mathbf{\Sigma}\in\mathcal{M}_{p\times p}(\mathbb{R})$ are positive definite matrices encoding the depence structure between observations and features respectively.
 
-**PCIdep** is the natural extension to the general matrix normal model of the work in [2] ([clusterpval](https://github.com/lucylgao/clusterpval)) and [3] ([KMeansInference](https://github.com/yiqunchen/KmeansInference)) where the framework for selective inference after hierarchical clustering and $k$-means respectively is presented when $\mathbf{U}=\mathbf{I}_n$ and $\mathbf{\Sigma}=\sigma\mathbf{I}_p$.
+**PCIdep** is the natural extension to the general matrix normal model of the work in [clusterpval](https://github.com/lucylgao/clusterpval) [2] and [KMeansInference](https://github.com/yiqunchen/KmeansInference) [3] where the framework for selective inference after hierarchical clustering and $k$-means respectively is presented when $\mathbf{U}=\mathbf{I}_n$ and $\mathbf{\Sigma}=\sigma\mathbf{I}_p$.
 
 ### Installing PCIdep
 
