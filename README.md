@@ -63,11 +63,11 @@ U <- matrixNormal::I(n) # U: dependence between observations
 X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
 Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
 
-#' # k-means under the global null hypothesis
-#' test.clusters.km(X, U, Sigma, NC = 3, clusters = sample(1:3, 2))
+# k-means under the global null hypothesis
+test.clusters.km(X, U, Sigma, NC = 3, clusters = sample(1:3, 2))
 
-#' # k-means under the global null hypothesis and over-estimation of Sigma
-#' test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
+# k-means under the global null hypothesis and over-estimation of Sigma
+test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
 ```
 
 ### References
