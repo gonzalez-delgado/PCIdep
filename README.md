@@ -1,4 +1,4 @@
-# torustest
+# PCIdep
 
 **PCIdep** is an $\texttt{R}$ package implementing the approaches introduced in [1] to perform selective inference after hierarchical or $k$-means clustering when the observations are drawn from a general matrix normal model:
 
