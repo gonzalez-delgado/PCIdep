@@ -20,7 +20,7 @@ devtools::install_github("https://github.com/gonzalez-delgado/PCIdep")
 
 For any inquires, please file an [issue](https://github.com/gonzalez-delgado/PCIdep/issues) or [contact us](mailto:javier.gonzalez-delgado@math.univ-toulouse.fr).
 
-### Two-sample goodness-of-fit tests
+### Selective inference after hierarchical clustering
 
 Given two measures $P,Q\in\mathcal{P}(\mathbb{T}^2)$, we consider the null hypothesis $H_0:P=Q$. The package **torustest** allows the assessment of $H_0$ through two different procedures, detailed below.
 
@@ -92,4 +92,5 @@ torustest::twosample.ubound.torus.test(samp_1, samp_2)
 
 ### References
 
-[1] González-Delgado, J., González-Sanz, A., Cortés, J., & Neuvial, P. (2021). Two-sample goodness-of-fit tests on the flat torus based on Wasserstein distance and their relevance to structural biology. arXiv:2108.00165. [[arxiv]](https://arxiv.org/abs/2108.00165)[[HAL]](https://hal.archives-ouvertes.fr/hal-03369795v2).
+[2] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022.
+[3] Y. T. Chen and D. M. Witten. Selective inference for k-means clustering, 2022. arXiv:2203.15267.
