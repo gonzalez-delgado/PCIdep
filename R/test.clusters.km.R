@@ -40,7 +40,7 @@
 #' @export
 #' 
 
-test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-4){
+test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6){
   
   if(is.null(U)){U <- Matrix::Diagonal(dim(X)[1])}else{ # Independent observations by default
     if(!matrixNormal::is.positive.definite(U)){stop('U must be positive-definite.')}else{ # Check for positive-definiteness of U
@@ -77,10 +77,10 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   }
   
   # K-means clustering from KmeansInference package 
-  km <- KmeansInference::kmeans_estimation(X, k = NC, seed = NULL, verbose = FALSE, tol_eps = tol, iter.max = itermax)
+  test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = 1234, sig = 1, tol_eps = tol, iter.max = itermax)
   
   # Select individuals from each cluster
-  km_at_cl = as.vector(km$final_cluster) # Clustering partition
+  km_at_cl <- as.vector(test_kmeans$final_cluster) # Clustering partition
   n1 <- sum(km_at_cl == clusters[1])
   n2 <- sum(km_at_cl == clusters[2])
   
@@ -97,7 +97,6 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   stat_V <- as.numeric(sqrt(Matrix::crossprod(diff_means, Matrix::crossprod(Matrix::t(V_g1g2_inv), diff_means)))) # Test statistic (norm_V{diff_means})
   
   # Computation of the truncation set for the 2-norm in Chen et al. 2022
-  test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = NULL, sig = 1)
   S2 <- test_kmeans$final_interval # Truncation set for the 2-norm
   stat_2 <- test_kmeans$test_stat # Test statistic for the 2-norm (2-norm of diff_means)
   SV <- S2*as.numeric(exp(log(stat_V)-log(stat_2))) # Truncation set for norm_V.
