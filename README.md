@@ -1,6 +1,6 @@
 # PCIdep: Post-Clustering Inference under DEPendency
 
-**PCIdep** is an $\texttt{R}$ package implementing the approaches introduced in [González-Delgado _et al._ (2023)](http://arxiv.org/abs/2310.11822) to perform selective inference after hierarchical or $k$-means clustering when the observations are drawn from a general matrix normal model:
+$\texttt{PCIdep}$ is an $\texttt{R}$ package implementing the approaches introduced in [González-Delgado _et al._ (2023)](http://arxiv.org/abs/2310.11822) to perform selective inference after hierarchical or $k$-means clustering when the observations are drawn from a general matrix normal model:
 
 $$
 \mathbf{X}\sim\mathcal{MN}_{n\times p}(\boldsymbol\mu,\mathbf{U},\mathbf{\Sigma}),
@@ -8,11 +8,11 @@ $$
 
 where  $`\boldsymbol\mu\in\mathcal{M}_{n\times p}(\mathbb{R})`$ and $`\mathbf{U}\in\mathcal{M}_{n\times n}(\mathbb{R})`$, $`\mathbf{\Sigma}\in\mathcal{M}_{p\times p}(\mathbb{R})`$ are positive definite matrices encoding the dependence structure between observations and features respectively.
 
-**PCIdep** is the natural extension to the general matrix normal model of the work in [clusterpval](https://github.com/lucylgao/clusterpval) [2] and [KMeansInference](https://github.com/yiqunchen/KmeansInference) [3] where the framework for selective inference after hierarchical clustering and $k$-means respectively is presented for $\mathbf{U}=\mathbf{I}_n$ and $\mathbf{\Sigma}=\sigma\mathbf{I}_p$, allowing for the estimation of the unknown parameter $\sigma$.
+$\texttt{PCIdep}$ is the natural extension to the general matrix normal model of the work in [clusterpval](https://github.com/lucylgao/clusterpval) [2] and [KMeansInference](https://github.com/yiqunchen/KmeansInference) [3] where the framework for selective inference after hierarchical clustering and $k$-means respectively is presented for $\mathbf{U}=\mathbf{I}_n$ and $\mathbf{\Sigma}=\sigma\mathbf{I}_p$, allowing for the estimation of the unknown parameter $\sigma$.
 
 ### Installing PCIdep
 
-**PCIdep** can be installed using
+$\texttt{PCIdep}$ can be installed using
 
 ```
 devtools::install_github("https://github.com/gonzalez-delgado/PCIdep")
