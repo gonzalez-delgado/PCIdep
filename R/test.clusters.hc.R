@@ -51,7 +51,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   if(is.null(U)){U <- Matrix::Diagonal(dim(X)[1])}else{ # Independent observations by default
     if(!matrixNormal::is.positive.definite(U)){stop('U must be positive-definite.')}else{ # Check for positive-definiteness of U
-      U <- Matrix::Matrix(U) # Memory efficiency
+      U <- Matrix::Matrix(U, sparse = TRUE) # Memory efficiency
     }}
   
   # Check for correct clustering specification
@@ -68,7 +68,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     if(is.null(UY) & is.null(precUY)){precUY <- Matrix::Diagonal(dim(Y)[1])} # If the matrix U for Y and its inverse are not provided, independent observations by default
     if(is.null(precUY) & !is.null(UY)){ # Provide U for Y but not its inverse
       UY <- Matrix::Matrix(UY) 
-      precUY <- Matrix::solve(UY)}
+      precUY <- Matrix::solve(UY, sparse = TRUE)}
     if(!is.null(precUY)){precUY <- Matrix::Matrix(precUY)} # Provide the inverse of U for Y
     
     # Estimate Sigma
@@ -79,7 +79,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   }else{# Sigma is known and provided by the user
     
     if(!matrixNormal::is.positive.definite(Sigma)){stop('Sigma must be positive-definite.')}else{ # Check for positive-definiteness for Sigma
-      Sigma <- Matrix::Matrix(Sigma) # Memory efficiency
+      Sigma <- Matrix::Matrix(Sigma, sparse = TRUE) # Memory efficiency
     }
   }
   
@@ -102,7 +102,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   n2 <- sum(hcl_at_K == clusters[2])
   
   # Difference of cluster means 
-  diff_means <- Matrix::Matrix(colMeans(X[hcl_at_K == clusters[1], , drop = FALSE]) - colMeans(X[hcl_at_K == clusters[2], , drop = FALSE])) 
+  diff_means <- Matrix::Matrix(colMeans(X[hcl_at_K == clusters[1], , drop = FALSE]) - colMeans(X[hcl_at_K == clusters[2], , drop = FALSE]), sparse = TRUE) 
   
   # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x},
   # where V = D (U \otimes Sigma) D^T
@@ -110,7 +110,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   U_g1g2 <- U[hcl_at_K == clusters[1] | hcl_at_K == clusters[2], hcl_at_K == clusters[1] | hcl_at_K == clusters[2]]
   V_g1g2 <- Matrix::crossprod(Matrix::t(D_g1g2), Matrix::tcrossprod(Matrix::kronecker(U_g1g2, Sigma), D_g1g2))
   
-  V_g1g2_inv <- Matrix::solve(V_g1g2)
+  V_g1g2_inv <- Matrix::solve(V_g1g2, sparse = TRUE)
   stat_V <- as.numeric(sqrt(Matrix::crossprod(diff_means, Matrix::crossprod(Matrix::t(V_g1g2_inv), diff_means)))) # Test statistic (norm_V{diff_means})
   
   if(!linkage == "complete"){ # Code adapted from clusterpval package (Gao et al. 2022)
