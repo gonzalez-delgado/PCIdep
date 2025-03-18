@@ -22,7 +22,7 @@ For any inquires, please file an [issue](https://github.com/gonzalez-delgado/PCI
 
 ### Selective inference after hierarchical clustering
 
-The function [test.clusters.hc](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.hc.R) adapts the framework presented in [clusterpval](https://github.com/lucylgao/clusterpval) to the general matrix normal model. It allows selective inference after hierarchical clustering (HC) with multiple types of linkage. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error (under some conditions on $`\mathbf{U}`$).
+The function [test.clusters.hc](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.hc.R) adapts the framework presented in [clusterpval](https://github.com/lucylgao/clusterpval) to the general matrix normal model. It allows selective inference after hierarchical clustering (HC) with multiple types of linkage. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error (under some conditions on $\mathbf{U}$).
 
 #### Example
 
@@ -47,7 +47,7 @@ test.clusters.hc(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2), p
 
 ### Selective inference after $k$-means clustering
 
-The function [test.clusters.km](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.km.R) adapts the framework presented in [KMeansInference](https://github.com/yiqunchen/KmeansInference) to the general matrix normal model. It allows selective inference after $k$-means clustering. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error (under some conditions on $`\mathbf{U}`$). 
+The function [test.clusters.km](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.km.R) adapts the framework presented in [KMeansInference](https://github.com/yiqunchen/KmeansInference) to the general matrix normal model. It allows selective inference after $k$-means clustering. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error (under some conditions on $\mathbf{U}$). 
 
 #### Example
 
