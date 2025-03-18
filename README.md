@@ -10,6 +10,10 @@ where  $`\boldsymbol\mu\in\mathcal{M}_{n\times p}(\mathbb{R})`$ and $`\mathbf{U}
 
 $\texttt{PCIdep}$ is the natural extension to the general matrix normal model of the work in [clusterpval](https://github.com/lucylgao/clusterpval) [2] and [KMeansInference](https://github.com/yiqunchen/KmeansInference) [3] where the framework for selective inference after hierarchical clustering and $k$-means respectively is presented for $\mathbf{U}=\mathbf{I}_n$ and $\mathbf{\Sigma}=\sigma\mathbf{I}_p$, allowing for the estimation of the unknown parameter $\sigma$.
 
+#### Necessary conditions on U
+
+The selective type I error control is ensured if $\mathbf{U}$ has a Compound Symmetry (CS) structure, that is, if $\mathbf{U} = (a-b)\mathbb{I}_n + b\mathbf{1}_n$, for some $a/(n-1)<b<a$. However, the method is \underline{robust to \mathbf{U} not being CS} if the deviation is not large.
+
 ### Installing PCIdep
 
 $\texttt{PCIdep}$ can be installed using
