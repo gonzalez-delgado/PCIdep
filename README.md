@@ -12,8 +12,8 @@ $\texttt{PCIdep}$ is the natural extension to the general matrix normal model of
 
 #### Necessary conditions on U
 
-The selective type I error control is ensured if $\mathbf{U}$ has a Compound Symmetry (CS) structure, that is, if $\mathbf{U} = (a-b)\mathbf{I}_n + b\mathbf{1}_n$, for some $a/(n-1)<b<a$. However, the method is <i>robust to $\mathbf{U}$ not being CS</i> if the deviation is not large.
-
+The selective type I error control is ensured if $\mathbf{U}$ has a Compound Symmetry (CS) structure, that is, if $\mathbf{U} = (a-b)\mathbf{I}_n + b\mathbf{1}_n$, for some $a/(n-1)<b<a$. However, the method is <i>robust to $\mathbf{U}$ not being CS</i> if the deviation is not large. We recommend that the partitioner use the method for known $\mathbf{U}$ matrices that do not deviate substantially from the CS structure (e.g. AR(1), Diagonal, Banded or Toeplitz, depending on the parameters).
+ 
 ### Installing PCIdep
 
 $\texttt{PCIdep}$ can be installed using
