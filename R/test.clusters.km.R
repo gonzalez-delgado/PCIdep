@@ -42,27 +42,54 @@
 
 test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6){
   
-  if(is.null(U)){U <- Matrix::Diagonal(dim(X)[1])}else{ # Independent observations by default
-    if(!matrixNormal::is.positive.definite(U)){stop('U must be positive-definite.')}else{ # Check for positive-definiteness of U
-      U <- Matrix::Matrix(U, sparse = TRUE) # Memory efficiency
-    }}
+  #### Initial checks and pre-processing #######################################
+
+  # Check U
+  if(is.null(U)){
+    
+    U <- Matrix::Diagonal(dim(X)[1]) # Independent observations by default
+    cat('U is not provided: observations are considered independent with unit variance.')  
+    
+  }else{ 
+    
+    if(!matrixNormal::is.positive.definite(U)){ # Check for positive-definiteness of U
+      
+      stop('U must be positive-definite.')}else{ 
+        
+        if(!is.CS(U)){warning('U is not Compound Symmetry: selective type I error control might be lost if the deviation from the CS structure is large.')}
+        U <- Matrix::Matrix(U) # Memory efficiency
+        
+      }}
   
   # Check for correct clustering specification
-  if(!all(clusters%in%c(1:NC)) | length(clusters)!=2){stop('clusters must be a vector of two integers between 1 and NC.')}
+  if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
   
+  # Check Sigma
   # If Sigma is not provided, estimate it
   if(is.null(Sigma)){
     
-    if(is.null(Y)){stop('Sigma is not provided. An i.i.d. sample Y must be provided to allow its over-estimation.')} # Need to provide i.i.d. copy of Y if Sigma is NULL
-    if(dim(Y)[2] != dim(X)[2]){stop('Y and X must have the number of variables')} # X and Y must have the same number of features
+    if(is.null(Y)){
+      
+      stop('Sigma is not provided. An i.i.d. sample Y must be provided to allow its over-estimation.')} # Need to provide i.i.d. copy of Y if Sigma is NULL
+    
+    if(dim(Y)[2] != dim(X)[2]){
+      
+      stop('Y and X must have the number of variables')} # X and Y must have the same number of features
+    
     cat('Sigma not provided: plugging an over-estimate.\n')
     
+    if(is.null(UY) & is.null(precUY)){
+      
+      precUY <- Matrix::Diagonal(dim(Y)[1])} # If the matrix U for Y and its inverse are not provided, independent observations by default
     
-    if(is.null(UY) & is.null(precUY)){precUY <- Matrix::Diagonal(dim(Y)[1])} # If the matrix U for Y and its inverse are not provided, independent observations by default
     if(is.null(precUY) & !is.null(UY)){ # Provide U for Y but not its inverse
+      
       UY <- Matrix::Matrix(UY) 
-      precUY <- Matrix::solve(UY, sparse = TRUE)}
-    if(!is.null(precUY)){precUY <- Matrix::Matrix(precUY)} # Provide the inverse of U for Y
+      precUY <- Matrix::solve(UY)}
+    
+    if(!is.null(precUY)){
+      
+      precUY <- Matrix::Matrix(precUY)} # Provide the inverse of U for Y
     
     # Estimate Sigma
     Y <- Matrix::Matrix(Y) # Memory efficiency
@@ -71,30 +98,37 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     
   }else{# Sigma is known and provided by the user
     
-    if(!matrixNormal::is.positive.definite(Sigma)){stop('Sigma must be positive-definite.')}else{ # Check for positive-definiteness for Sigma
-      Sigma <- Matrix::Matrix(Sigma, sparse = TRUE) # Memory efficiency
-    }
+    if(!matrixNormal::is.positive.definite(Sigma)){ # Check for positive-definiteness for Sigma
+      
+      stop('Sigma must be positive-definite.')}else{
+        
+        Sigma <- Matrix::Matrix(Sigma) # Memory efficiency
+      }
   }
+  
+  #### Cluster data ############################################################
   
   # K-means clustering from KmeansInference package 
   test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = 1234, sig = 1, tol_eps = tol, iter.max = itermax)
+  
+  #### Test for the difference of cluster means ################################
   
   # Select individuals from each cluster
   km_at_cl <- as.vector(test_kmeans$final_cluster) # Clustering partition
   n1 <- sum(km_at_cl == clusters[1])
   n2 <- sum(km_at_cl == clusters[2])
+  nu <- Matrix::Matrix((km_at_cl == clusters[1])/n1 - (km_at_cl == clusters[2])/n2)
+  norm2_nu <- 1/n1 + 1/n2
   
   # Difference of cluster means 
-  diff_means <- Matrix::Matrix(colMeans(X[km_at_cl == clusters[1], , drop = FALSE]) - colMeans(X[km_at_cl == clusters[2], , drop = FALSE]), sparse = TRUE) 
+  diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X) 
   
   # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x},
-  # where V = D (U \otimes Sigma) D^T
-  D_g1g2 <- Matrix::kronecker(Matrix::Matrix(t(c(rep(1/n1, n1), rep(-1/n2, n2)))), Matrix::Diagonal(dim(Sigma)[1]))
-  U_g1g2 <- U[km_at_cl == clusters[1] | km_at_cl == clusters[2], km_at_cl == clusters[1] | km_at_cl == clusters[2]]
-  V_g1g2 <- Matrix::crossprod(Matrix::t(D_g1g2), Matrix::tcrossprod(Matrix::kronecker(U_g1g2, Sigma), D_g1g2))
-  
-  V_g1g2_inv <- Matrix::solve(V_g1g2, sparse = TRUE)
-  stat_V <- as.numeric(sqrt(Matrix::crossprod(diff_means, Matrix::crossprod(Matrix::t(V_g1g2_inv), diff_means)))) # Test statistic (norm_V{diff_means})
+  # where V = nu^T U nu Sigma
+  norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
+  V_g1g2 <- norm2U_nu[1]*Sigma
+  V_g1g2_inv <- Matrix::solve(V_g1g2)
+  stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv,diff_means))) # Test statistic (norm_V{diff_means})
   
   # Computation of the truncation set for the 2-norm in Chen et al. 2022
   S2 <- test_kmeans$final_interval # Truncation set for the 2-norm
