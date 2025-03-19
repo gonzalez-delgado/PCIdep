@@ -22,7 +22,7 @@ $\texttt{PCIdep}$ can be installed using
 devtools::install_github("https://github.com/gonzalez-delgado/PCIdep")
 ```
 
-For any inquires, please file an [issue](https://github.com/gonzalez-delgado/PCIdep/issues) or [contact us](mailto:javier.gonzalezdelgado@mcgill.ca).
+For any inquires, please file an [issue](https://github.com/gonzalez-delgado/PCIdep/issues) or [contact us](mailto:javier.gonzalez-delgado@ensai.fr).
 
 ### Selective inference after hierarchical clustering
 
