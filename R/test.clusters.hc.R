@@ -173,8 +173,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       orig_k2 <- t(X[hcl_at_K == clusters[2], ])
       
       Xphi <- X
-      NXphi <- X - 2*nu%*%diff_means/norm2_nu
-      
+
       for(j in 1:ndraws) {
         if(phi[j] < 0) next
         
@@ -183,17 +182,11 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
         Xphi[hcl_at_K == clusters[1], ] <- t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
         Xphi[hcl_at_K == clusters[2], ] <- t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
         
-        # Compute perturbed data set for negative phi's
-        NXphi[hcl_at_K == clusters[1], ] <- t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
-        NXphi[hcl_at_K == clusters[2], ] <- t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
-        
         # Recluster the perturbed data sets
         hcl_Xphi <- fastcluster::hclust(stats::dist(Xphi)^2, method = "complete")
         clusters_Xphi <- stats::cutree(hcl_Xphi, NC)
-        hcl_NXphi <- fastcluster::hclust(stats::dist(NXphi)^2, method = "complete")
-        clusters_NXphi <- stats::cutree(hcl_NXphi, NC)
-        
-        if((sum(table(hcl_at_K, clusters_Xphi) != 0) == NC) | (sum(table(hcl_at_K, clusters_NXphi) != 0) == NC)) { # Check for same cluster
+          
+        if((sum(table(hcl_at_K, clusters_Xphi) != 0) == NC)) { # Check for same cluster
           log_survives[j] <- -phi[j]^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
             stats::dnorm(phi[j], mean = stat_V, sd = 1, log = TRUE)
         }
