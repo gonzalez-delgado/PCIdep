@@ -155,7 +155,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     I2 <- suppressWarnings(intervals::interval_intersection(I1, SV^2))
     pv <- clusterpval::TChisqRatioApprox(dim(Sigma)[1], I2, SV^2)
     
-    return(list(pvalue = pv, stat = stat_V, hcl = hcl_at_K))}else{ # Complete linkage
+    return(list(pvalue = pv, stat = stat_V, hcl = hcl_at_K, Sigma = Sigma))}else{ # Complete linkage
       
       cat('Clustering with complete linkage. Monte-Carlo approximation of the p-value.\n')
       
@@ -210,7 +210,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       pv <- sum(props[phi >= stat_V])
       var_pv <- (1 - pv)^2*sum(props[phi >= stat_V]^2) + pv^2*sum(props[phi < stat_V]^2)
       
-      return(list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv), hcl = hcl_at_K))
+      return(list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv), hcl = hcl_at_K, Sigma = Sigma))
       
     }
 }
