@@ -140,6 +140,6 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   I2 <- suppressWarnings(intervals::interval_intersection(I1, SV^2))
   pv <- clusterpval::TChisqRatioApprox(dim(Sigma)[1], I2, SV^2)
   
-  return(list(pvalue = pv, stat = stat_V, km = km_at_cl))}
+  return(list(pvalue = pv, stat = stat_V, km = km_at_cl, Sigma = Sigma))}
 
 
