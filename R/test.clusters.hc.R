@@ -178,6 +178,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
         if(phi[j] < 0) next
         
         # Compute perturbed data set for positive phi's
+        Xphi <- X
         phi_minus_stat <- phi[j] - stat_V 
         Xphi[hcl_at_K == clusters[1], ] <- t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
         Xphi[hcl_at_K == clusters[2], ] <- t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
