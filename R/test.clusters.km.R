@@ -1,11 +1,11 @@
 #' Test for the difference of two cluster means after k-means clustering, for matrix normal model with arbitrary scale matrices.
 #' 
-#' @param X n x p matrix drawn from a n x p matrix normal distribution MN(M,U,Sigma). X must have n rows and p columns.
-#' @param U A n x n positive-definite matrix describing the dependence structure between the rows in X. If NULL, observations are considered independent and U is set to the n x x identity matrix.
-#' @param Sigma A p x p positive-definite matrix describing the dependence structure between the columns in X. If NULL, Sigma is over-estimated (in the sens of the Loewner partial order).
-#' @param Y If Sigma is NULL, an i.i.d. copy of X allowing its estimation. Y must have the same number of columns as X.
-#' @param UY If Sigma is NULL, a positive-definite matrix describing the dependence structure between the rows in Y. If NULL and its inverse is not provided, set to the identity matrix by default.
-#' @param precUY The inverse matrix of UY, that can be provided to incredevlase computational efficiency. If UY is not NULL and precUY is NULL, precUY is obtained by inversing UY.
+#' @param X \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
+#' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sens of the Loewner partial order).
+#' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
+#' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
+#' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
 #' @param NC The number of clusters to choose.
 #' @param clusters A vector of two integers from 1 to NC indicating the pair of clusters whose means have to be compared.
 #' @param itermax The iter.max parameter of the k-means algorithm in kmeans_estimation function of KmeansInference package.

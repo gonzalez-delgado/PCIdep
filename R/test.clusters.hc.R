@@ -1,14 +1,14 @@
 #' Test for the difference of two cluster means after hierarchical clustering, for matrix normal model with arbitrary scale matrices.
 #' Supported linkages as in Gao et al. 2022 {"single", "average", "centroid", "ward.D", "median", "mcquitty", "complete"}.
 #' 
-#' @param X n x p matrix drawn from a n x p matrix normal distribution MN(M,U,Sigma). X must have n rows and p columns.
-#' @param U A n x n positive-definite matrix describing the dependence structure between the rows in X. If NULL, observations are considered independent and U is set to the n x x identity matrix.
-#' @param Sigma A p x p positive-definite matrix describing the dependence structure between the columns in X. If NULL, Sigma is over-estimated (in the sens of the Loewner partial order).
-#' @param Y If Sigma is NULL, an i.i.d. copy of X allowing its estimation. Y must have the same number of columns as X.
-#' @param UY If Sigma is NULL, a positive-definite matrix describing the dependence structure between the rows in Y. If NULL and its inverse is not provided, set to the identity matrix by default.
-#' @param precUY The inverse matrix of UY, that can be provided to increase computational efficiency. If UY is not NULL and precUY is NULL, precUY is obtained by inversing UY.
+#' @param X \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
+#' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sens of the Loewner partial order).
+#' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
+#' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
+#' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
 #' @param NC The number of clusters to choose.
-#' @param clusters A vector of two integers from 1 to NC indicating the pair of clusters whose means have to be compared.
+#' @param clusters A vector of two integers from \eqn{1} to \eqn{NC} indicating the pair of clusters whose means have to be compared.
 #' @param linkage The type of linkage for hierarchical clustering. Must be one in {"single", "average", "centroid", "ward.D", "median", "mcquitty", "complete"}.
 #' @param ndraws If linkage is "complete", the number of Monte Carlo iterations.
 #'
@@ -178,6 +178,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
         if(phi[j] < 0) next
         
         # Compute perturbed data set for positive phi's
+        Xphi <- X
         phi_minus_stat <- phi[j] - stat_V 
         Xphi[hcl_at_K == clusters[1], ] <- t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
         Xphi[hcl_at_K == clusters[2], ] <- t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
@@ -185,7 +186,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
         # Recluster the perturbed data sets
         hcl_Xphi <- fastcluster::hclust(stats::dist(Xphi)^2, method = "complete")
         clusters_Xphi <- stats::cutree(hcl_Xphi, NC)
-          
+        
         if((sum(table(hcl_at_K, clusters_Xphi) != 0) == NC)) { # Check for same cluster
           log_survives[j] <- -phi[j]^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
             stats::dnorm(phi[j], mean = stat_V, sd = 1, log = TRUE)
