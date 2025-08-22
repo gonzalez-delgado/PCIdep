@@ -12,7 +12,7 @@ $\texttt{PCIdep}$ is the natural extension to the general matrix normal model of
 
 #### Necessary conditions on U
 
-The selective type I error control is ensured if $\mathbf{U}$ has a Compound Symmetry (CS) structure, that is, if $\mathbf{U} = (a-b)\mathbf{I}_n + b\mathbf{1}_n$, for some $a/(n-1)<b<a$. However, the method is <i>robust to $\mathbf{U}$ not being CS</i> if the deviation is not large. We recommend the partitioner to use the method for <i>known $\mathbf{U}$ matrices that do not deviate substantially from the CS structure</i> (e.g. AR(1), Diagonal, Banded or Toeplitz, depending on the parameters).
+The selective type I error control is ensured if $\mathbf{U}$ has a Compound Symmetry (CS) structure, that is, if $\mathbf{U} = (a-b)\mathbf{I}_n + b\mathbf{1}_n$, for some $a/(n-1)<b<a$. However, the method is <i>robust to $\mathbf{U}$ not being CS</i> if the deviation is not large. We recommend the practitioner to use the method for <i>known $\mathbf{U}$ matrices that do not deviate substantially from the CS structure</i> (e.g. AR(1), Diagonal, Banded or Toeplitz, depending on the parameters).
  
 ### Installing PCIdep
 
@@ -76,7 +76,7 @@ test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
 
 ### References
 
-[1] J. González-Delgado, J. Cortés and P. Neuvial, Post-clustering Inference under Dependency. [arXiv:2310.11822](http://arxiv.org/abs/2310.11822), 2023.
+[1] J. González-Delgado, M. Deronzier, J. Cortés and P. Neuvial, Post-clustering Inference under Dependency. [arXiv:2310.11822](http://arxiv.org/abs/2310.11822), 2023.
 
 [2] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022. 
 
