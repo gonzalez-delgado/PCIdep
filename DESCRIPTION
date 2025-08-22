@@ -1,14 +1,14 @@
 Package: PCIdep
 Type: Package
-Title: Post-clustering inference for general matrix normal models
+Title: Post-clustering inference for general matrix normal models.
 Version: 0.1.0
 Author: Javier González-Delgado
-Maintainer: Javier González-Delgado <javier.gonzalez-delgado@math.univ-toulouse.fr>
+Maintainer: Javier González-Delgado <javier.gonzalez-delgado@ensai.fr>
 Description: PCIdep extends the framework introduced in the R packages clusterpval and KMeansInference for arbitrary dependence structures between observations and features.
 Encoding: UTF-8
 Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, RColorBrewer, graphics
 Remotes: lucylgao/clusterpval, yiqunchen/KmeansInference
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 NeedsCompilation: no
 Packaged: 2023-01-24 12:34:47 UTC; jgonzale
 License: MIT + file LICENSE

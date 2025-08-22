@@ -14,25 +14,25 @@ test.clusters.km(
   NC,
   clusters,
   itermax = 10,
-  tol = 1e-04
+  tol = 1e-06
 )
 }
 \arguments{
-\item{X}{n x p matrix drawn from a n x p matrix normal distribution MN(M,U,Sigma). X must have n rows and p columns.}
+\item{X}{A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.}
 
-\item{U}{A n x n positive-definite matrix describing the dependence structure between the rows in X. If NULL, observations are considered independent and U is set to the n x x identity matrix.}
+\item{U}{A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.}
 
-\item{Sigma}{A p x p positive-definite matrix describing the dependence structure between the columns in X. If NULL, Sigma is over-estimated (in the sens of the Loewner partial order).}
+\item{Sigma}{A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).}
 
-\item{Y}{If Sigma is NULL, an i.i.d. copy of X allowing its estimation. Y must have the same number of columns as X.}
+\item{Y}{If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.}
 
-\item{UY}{If Sigma is NULL, a positive-definite matrix describing the dependence structure between the rows in Y. If NULL and its inverse is not provided, set to the identity matrix by default.}
+\item{UY}{If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.}
 
-\item{precUY}{The inverse matrix of UY, that can be provided to incredevlase computational efficiency. If UY is not NULL and precUY is NULL, precUY is obtained by inversing UY.}
+\item{precUY}{The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.}
 
 \item{NC}{The number of clusters to choose.}
 
-\item{clusters}{A vector of two integers from 1 to NC indicating the pair of clusters whose means have to be compared.}
+\item{clusters}{A vector of two integers from 1 to \code{NC} indicating the pair of clusters whose means have to be compared.}
 
 \item{itermax}{The iter.max parameter of the k-means algorithm in kmeans_estimation function of KmeansInference package.}
 
@@ -40,9 +40,9 @@ test.clusters.km(
 }
 \value{
 \itemize{
-  \item pvalue - The p-value for the difference between cluster means.
+  \item pvalue - The p-value for the difference of cluster means.
   \item stat - The test statistic.
-  \item km - The partition of the n observations retrieved by the clustering algorithm.
+  \item km - The partition of the \code{n} observations retrieved by the clustering algorithm.
 }
 }
 \description{

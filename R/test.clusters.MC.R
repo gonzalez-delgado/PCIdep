@@ -1,9 +1,8 @@
-#' Test for the difference of two cluster means after hierarchical clustering, for matrix normal model with arbitrary scale matrices.
-#' Supported linkages as in Gao et al. 2022 {"single", "average", "centroid", "ward.D", "median", "mcquitty", "complete"}.
+#' Test for the difference of two cluster means after any clustering algorithm, for matrix normal model with arbitrary scale matrices.
 #' 
-#' @param X \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
+#' @param X A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
 #' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
-#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sens of the Loewner partial order).
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).
 #' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
 #' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
 #' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
@@ -15,10 +14,10 @@
 #'
 #' @return 
 #' \itemize{
-#'   \item pvalue - The p-value for the difference between cluster means.
+#'   \item pvalue - The p-value for the difference of cluster means.
 #'   \item stat - The test statistic.
-#'   \item stdrr - If linkage is "complete", the Monte Carlo standard error.
-#'   \item clusters - The partition of the n observations retrieved by the clustering algorithm.
+#'   \item stdrr - The Monte Carlo standard error.
+#'   \item clusters - The partition of the \code{n} observations retrieved by the clustering algorithm.
 #' }
 #'
 #' @examples
@@ -48,12 +47,12 @@
 #' # We start by clustering the data
 #' clusters_X <- hdbscan.clustering(X)
 #' # We test for the equality of clusters 3 and 1
-#' test.clusters.MC(X, U = U, Sigma = Sigma, clusters = c(3,1), cl = clusters_X, cl_fun = hdbscan.clustering, NC = NULL, ndraws = 500)
+#' test.clusters.MC(X, U = U, Sigma = Sigma, clusters = c(3,1),
+#'  cl = clusters_X, cl_fun = hdbscan.clustering, NC = NULL, ndraws = 500)
 #'
 #' @references [1] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022.
 #' 
 #' @export
-
 
 test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, 
                                  clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000){

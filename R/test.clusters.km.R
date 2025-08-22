@@ -1,21 +1,21 @@
 #' Test for the difference of two cluster means after k-means clustering, for matrix normal model with arbitrary scale matrices.
 #' 
-#' @param X \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
+#' @param X A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
 #' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
-#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sens of the Loewner partial order).
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).
 #' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
 #' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
 #' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
 #' @param NC The number of clusters to choose.
-#' @param clusters A vector of two integers from 1 to NC indicating the pair of clusters whose means have to be compared.
+#' @param clusters A vector of two integers from 1 to \code{NC} indicating the pair of clusters whose means have to be compared.
 #' @param itermax The iter.max parameter of the k-means algorithm in kmeans_estimation function of KmeansInference package.
 #' @param tol The tol_eps parameter of the k-means algorithm in kmeans_estimation function of KmeansInference package.
 #' 
 #' @return 
 #' \itemize{
-#'   \item pvalue - The p-value for the difference between cluster means.
+#'   \item pvalue - The p-value for the difference of cluster means.
 #'   \item stat - The test statistic.
-#'   \item km - The partition of the n observations retrieved by the clustering algorithm.
+#'   \item km - The partition of the \code{n} observations retrieved by the clustering algorithm.
 #' }
 #'
 #' @examples

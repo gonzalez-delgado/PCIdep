@@ -1,23 +1,23 @@
 #' Test for the difference of two cluster means after hierarchical clustering, for matrix normal model with arbitrary scale matrices.
-#' Supported linkages as in Gao et al. 2022 {"single", "average", "centroid", "ward.D", "median", "mcquitty", "complete"}.
+#' Supported linkages (as in Gao et al. 2022)  are "single", "average", "centroid", "ward.D", "median", "mcquitty" and "complete".
 #' 
-#' @param X \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
+#' @param X A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
 #' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
-#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sens of the Loewner partial order).
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).
 #' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
 #' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
 #' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
 #' @param NC The number of clusters to choose.
-#' @param clusters A vector of two integers from \eqn{1} to \eqn{NC} indicating the pair of clusters whose means have to be compared.
-#' @param linkage The type of linkage for hierarchical clustering. Must be one in {"single", "average", "centroid", "ward.D", "median", "mcquitty", "complete"}.
-#' @param ndraws If linkage is "complete", the number of Monte Carlo iterations.
+#' @param clusters A vector of two integers from \eqn{1} to \code{NC} indicating the pair of clusters whose means have to be compared.
+#' @param linkage The type of linkage for hierarchical clustering. Must be either \code{single}, \code{average}, \code{centroid}, \code{ward.D}, \code{median}, \code{mcquitty} or \code{complete}.
+#' @param ndraws If linkage is \code{complete}, the number of Monte Carlo iterations.
 #'
 #' @return 
 #' \itemize{
-#'   \item pvalue - The p-value for the difference between cluster means.
+#'   \item pvalue - The p-value for the difference of cluster means.
 #'   \item stat - The test statistic.
-#'   \item stdrr - If linkage is "complete", the Monte Carlo standard error.
-#'   \item hcl - The partition of the n observations retrieved by the clustering algorithm.
+#'   \item stdrr - If linkage is \code{complete}, the Monte Carlo standard error.
+#'   \item hcl - The partition of the \code{n} observations retrieved by the clustering algorithm.
 #' }
 #'
 #' @examples
@@ -30,9 +30,9 @@
 #' X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
 #' Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
 #'
-#' # HC with average linkage under the global null hypothesis
+#' # HAC with average linkage under the global null hypothesis
 #' test.clusters.hc(X, U, Sigma, NC = 3, clusters = sample(1:3, 2), linkage = "average")
-#' # HC with complete linkage under the global null hypothesis and over-estimation of Sigma
+#' # HAC with complete linkage under the global null hypothesis and over-estimation of Sigma
 #' test.clusters.hc(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2), linkage = "complete")
 #'
 #' @references [1] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022.
