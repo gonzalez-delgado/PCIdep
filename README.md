@@ -78,6 +78,6 @@ test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
 
 [1] J. González-Delgado, M. Deronzier, J. Cortés and P. Neuvial, Post-clustering Inference under Dependence. [arXiv:2310.11822](http://arxiv.org/abs/2310.11822), 2023.
 
-[2] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022. 
+[2] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 119(545):332–342, 2024.
 
 [3]  Y. T. Chen and D. M. Witten. Selective inference for k-means clustering. Journal of Machine Learning Research, 24(152):1–41, 2023.
