@@ -1,4 +1,4 @@
-# PCIdep: Post-Clustering Inference under DEPendency
+# PCIdep: Post-Clustering Inference under DEPendence
 
 $\texttt{PCIdep}$ is an $\texttt{R}$ package implementing the approaches introduced in [González-Delgado _et al._ (2023)](http://arxiv.org/abs/2310.11822) to perform selective inference after hierarchical or $k$-means clustering when the observations are drawn from a general matrix normal model:
 
@@ -76,7 +76,7 @@ test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
 
 ### References
 
-[1] J. González-Delgado, M. Deronzier, J. Cortés and P. Neuvial, Post-clustering Inference under Dependency. [arXiv:2310.11822](http://arxiv.org/abs/2310.11822), 2023.
+[1] J. González-Delgado, M. Deronzier, J. Cortés and P. Neuvial, Post-clustering Inference under Dependence. [arXiv:2310.11822](http://arxiv.org/abs/2310.11822), 2023.
 
 [2] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022. 
 
