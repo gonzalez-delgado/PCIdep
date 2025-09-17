@@ -109,7 +109,7 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   #### Cluster data ############################################################
   
   # K-means clustering from KmeansInference package 
-  test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = 1234, sig = 1, tol_eps = tol, iter.max = itermax)
+  test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = NULL, sig = 1, tol_eps = tol, iter.max = itermax)
   
   #### Test for the difference of cluster means ################################
   
