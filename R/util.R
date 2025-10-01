@@ -28,7 +28,20 @@ is.CS <- function(U){
 #' @return Whether the cluster \code{clusters}[1] and the cluster \code{clusters}[2] in \code{cl} remain invariant in \code{cl_phi}, independently of label modifications.
 
 
-preserve.cl <- function(cl, cl_phi, clusters, uncl_label = 0) {
+preserve.cl <- function(cl, cl_phi, clusters) {
+  
+  new_cl1 <- unique(cl_phi[which(cl == clusters[1])])
+  new_cl2 <- unique(cl_phi[which(cl == clusters[2])])
+  
+  in_k1 <- length(new_cl1) == 1 # Individuals in the first clusters stay all in the same cluster
+  in_k2 <- length(new_cl2) == 1 # Individuals in the second clusters stay all in the same cluster
+  
+  out_k1_k2 <- all(! cl_phi[-which(cl %in% clusters)] %in% c(new_cl1, new_cl2)) # New individuals are not assigned to the new clusters after perturbation
+  
+  in_k1 & in_k2 & out_k1_k2
+}
+
+preserve.cl.unclassified <- function(cl, cl_phi, clusters, uncl_label = 0) {
   
   new_cl1 <- unique(cl_phi[which(cl == clusters[1])])
   new_cl2 <- unique(cl_phi[which(cl == clusters[2])])
