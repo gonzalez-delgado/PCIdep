@@ -55,7 +55,7 @@
 #' @export
 
 test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, 
-                                 clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000, ISK = 1){
+                                 clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000){
   
   #### Initial checks and pre-processing #######################################
   
@@ -125,6 +125,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
 
   # Check for correct clustering specification
   if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.\n')}
+  if(!all(clusters%in%cl)){stop('The clusters to compare need to be among those retrieved by the algorithm: clusters must take values in cl.\n')}
   
   #### Test for the difference of cluster means ################################
   
@@ -149,7 +150,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
      
   prop_k2 <- n2/(n1+n2)
   log_survives <- rep(NA, ndraws)
-  phi <- stats::rnorm(ndraws, stat_V, ISK*sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
+  phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
       
   diff_means <- as.numeric(diff_means)
   k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
@@ -174,7 +175,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
 
     if(preserve.cl(cl, cl_Xphi, clusters)) {
       log_survives <- -(phi[j])^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
-        stats::dnorm(phi[j], mean=stat_V, sd=ISK*sqrt(sum(Matrix::diag(Sigma))), log=TRUE)
+        stats::dnorm(phi[j], mean=stat_V, sd=sqrt(sum(Matrix::diag(Sigma))), log=TRUE)
       return(log_survives)
     }
     
