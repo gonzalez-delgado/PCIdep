@@ -13,3 +13,7 @@ NeedsCompilation: no
 Packaged: 2023-01-24 12:34:47 UTC; jgonzale
 License: MIT + file LICENSE
 URL: https://gonzalez-delgado.github.io/PCIdep/
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
