@@ -1,133 +1,143 @@
-#' Test for the difference of two cluster means after any clustering algorithm, for matrix normal model with arbitrary scale matrices.
-#' 
-#' @param X A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
-#' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
-#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).
-#' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
-#' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
-#' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
-#' @param clusters A vector of two integers from 1 to \code{NC} indicating the pair of clusters whose means have to be compared.
-#' @param cl_fun A function returning assignments to clusters. The function must take as input the data matrix \code{X} and the number of clusters \code{NC}.
-#' @param NC The number of clusters to choose, that will be passed as argument to \code{cl_fun}. Must be set to \code{NULL} if not required by \code{cl_fun}.
-#' @param cl The result of clustering \code{X} using \code{cl_fun}. It can useful to precompute this quantity before choosing \code{clusters}.
-#' @param ndraws The number of Monte Carlo iterations.
+#' @title Post-clustering inference after any clustering algorithm
+#' @family post-clustering inference functions
+#' @description
+#' Performs post-clustering inference for the difference between the means of two clusters obtained from a user-specified clustering algorithm, under a
+#' general matrix normal model.
 #'
-#' @return 
-#' \itemize{
-#'   \item pvalue - The p-value for the difference of cluster means.
-#'   \item stat - The test statistic.
-#'   \item stdrr - The Monte Carlo standard error.
-#'   \item clusters - The partition of the \code{n} observations retrieved by the clustering algorithm.
+#' The clustering algorithm is given by a user-provided function \code{cl_fun}, allowing this method to be applied to a wide range of clustering procedures.
+#'
+#' The covariance structure between features \code{Sigma} is estimated if not provided, respecting the selective type I error control. The covariance
+#' matrix between observations \code{U} is assumed known and should have a compound symmetry structure (see details).
+#'
+#' @param X A numeric \eqn{n \times p} matrix assumed to arise from a matrix normal distribution \eqn{\mathcal{MN}(M, U, \Sigma)}.
+#' @param U An \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows of \code{X}. If \code{NULL},
+#'   observations are assumed to be independent and \code{U} is set to the identity matrix.
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns of \code{X}. If \code{NULL},
+#'   \code{Sigma} is over-estimated from an auxiliary independent sample \code{Y} (in the sense of the Loewner partial order).
+#' @param Y If \code{Sigma} is \code{NULL}, an independent copy of \code{X} used to estimate \code{Sigma}. It must have the same number of columns as
+#'   \code{X}.
+#' @param UY If \code{Sigma} is \code{NULL}, an \eqn{n_Y \times n_Y} positive-definite matrix describing the dependence structure between the
+#'   rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity matrix is used by default.
+#' @param precUY The inverse of \code{UY}. Providing \code{precUY} may improve computational efficiency. If \code{UY} is provided but \code{precUY} is
+#'   \code{NULL}, it is computed internally.
+#' @param clusters Integer vector of length 2 specifying the pair of clusters to compare.
+#' @param cl_fun A function implementing the clustering procedure. It must take as input the data matrix \code{X} and return an integer vector of length \eqn{n} containing cluster assignments. If required by the clustering algorithm, \code{cl_fun} should also take an argument \code{NC} specifying the number of clusters to be used. 
+#' @param NC Integer scalar specifying the number of clusters to be used by \code{cl_fun}. If the clustering algorithm determines the number of
+#'   clusters automatically, this argument should be set to \code{NULL}.
+#' @param cl Optional integer vector of length \eqn{n} giving a precomputed clustering of \code{X}. If provided, \code{cl_fun} is not called.
+#' @param ndraws Integer. Number of Monte Carlo samples used to approximate the p-value.
+#' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
+#' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
+#' 
+#' @return
+#' A named list with the following components:
+#' \describe{
+#'   \item{pvalue}{The p-value for testing equality of the two selected cluster
+#'   means.}
+#'   \item{stat}{The observed test statistic.}
+#'   \item{stderr}{Monte Carlo standard error of the estimated p-value.}
+#'   \item{clusters}{An integer vector of length \eqn{n} giving the cluster
+#'   membership of each observation.}
 #' }
 #'
-#' @examples
+#' @details
+#' The method applies to any clustering algorithm that can be expressed through a function \code{cl_fun} returning cluster assignments. The selective
+#' inference procedure is based on a Monte Carlo approximation of the truncation region induced by the clustering step.
+#'
+#' Selective type I error control is guaranteed when the row covariance matrix \eqn{\mathbf{U}} has a compound symmetry (CS) structure, i.e.,
+#' \deqn{
+#'   \mathbf{U} = (a - b)\mathbf{I}_n + b\mathbf{1}_n,
+#' }
+#' for some \eqn{a/(n - 1) < b < a}. In practice, the method is robust to moderate deviations from the CS structure. In particular, reliable 
+#' performance is typically observed when \eqn{\mathbf{U}} remains close to CS, for example in autoregressive (AR(1)), diagonal, banded, or Toeplitz 
+#' covariance structures, depending on their parameters. We therefore recommend applying the method primarily in settings where \eqn{\mathbf{U}} is known and
+#' does not deviate substantially from the compound symmetry structure.
+#'
+#' When \code{Sigma = NULL}, the column covariance matrix is estimated from an auxiliary independent sample \code{Y}. When \code{U = NULL}, row-wise
+#' independence is assumed.
 #' 
+#' @examples
 #' n <- 50
 #' p <- 20
-#' M <- Matrix::Matrix(0, nrow = n , ncol = p) # Mean matrix
-#' Sigma <- stats::toeplitz(seq(1, 0.1, length = p)) # Sigma: dependence between features
-#' U <- matrixNormal::I(n) # U: dependence between observations
+#'
+#' # Simulating under the alternative hypothesis
+#' M <- Matrix::Matrix(0, nrow = n, ncol = p)
+#' M[1:floor(n/3),] <- -1
+#' M[(floor(2*n/3)+1):n,] <- 1
+#' Sigma <- stats::toeplitz(seq(1, 0.1, length.out = p))
+#' U <- matrixNormal::I(n)
+#'
 #' X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
-#' Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
+#' Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
 #'
-#' # Using HDBSCAN clustering from dbscan package. This algorithm selects 
-#' # automatically the number of clusters NC.
-#' # Additional clustering parameters must be set as default values
-#' # when defining cl_fun.
-#' 
-#' # install.packages('dbscan')
+#' # Example using HDBSCAN clustering (it chooses the number of clusters)
+#' # install.packages("dbscan")
 #'
-#' hdbscan.clustering <- function(X, NC = NULL, min.occupancy = 5){
-#'  
-#'  X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
-#'  return(X.clus$cluster + 1)
-#'  
+#' hdbscan_clustering <- function(X, min.occupancy = 5) {
+#'   X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
+#'   return(X.clus$cluster + 1) 
 #' }
 #'
-#' # We start by clustering the data
-#' clusters_X <- hdbscan.clustering(X)
-#' # We test for the equality of clusters 3 and 1
-#' test.clusters.MC(X, U = U, Sigma = Sigma, clusters = c(3,1),
-#'  cl = clusters_X, cl_fun = hdbscan.clustering, NC = NULL, ndraws = 500)
+#' # Precompute clustering
+#' cl_X <- hdbscan_clustering(X)
 #'
-#' @references [1] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022.
+#' # Test difference between clusters 3 and 1
+#' test.hdbscan <- test.clusters.MC(
+#'   X = X, U = U, Sigma = Sigma,
+#'   clusters = c(3, 1),
+#'   cl = cl_X,
+#'   cl_fun = hdbscan_clustering,
+#'   NC = NULL,
+#'   ndraws = 500
+#' )
+#' test.hdbscan$pvalue
+#'
+#' @references
+#' Gao, L. L., Bien, J., and Witten, D. (2022).
+#' Selective inference for hierarchical clustering.
+#' \emph{Journal of the American Statistical Association}, 117(540), 2533--2547.
 #' 
+#' González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2023)
+#' Post-clustering Inference under Dependence. 
+#' \emph{arXiv.2310.11822}.
+#'
 #' @export
 
-test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, 
-                                 clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000){
+test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL){
   
-  #### Initial checks and pre-processing #######################################
-  
-  # Check U
-  if(is.null(U)){
-    
-    U <- Matrix::Diagonal(dim(X)[1]) # Independent observations by default
-    cat('U is not provided: observations are considered independent with unit variance.\n')  
-    
-  }else{ 
-    
-    if(!matrixNormal::is.positive.definite(U)){ # Check for positive-definiteness of U
-      
-      stop('U must be positive-definite.')}else{ 
-        
-        if(!is.CS(U)){warning('U is not Compound Symmetry: selective type I error control might be lost if the deviation from the CS structure is large.\n')}
-        U <- Matrix::Matrix(U) # Memory efficiency
-        
-      }}
+  # --------------- Initial checks and pre-processing ---------------
 
-  # Check Sigma
-  # If Sigma is not provided, estimate it
-  if(is.null(Sigma)){
-    
-    if(is.null(Y)){
-      
-      stop('Sigma is not provided. An i.i.d. sample Y must be provided to allow its over-estimation.\n')} # Need to provide i.i.d. copy of Y if Sigma is NULL
-    
-    if(dim(Y)[2] != dim(X)[2]){
-      
-      stop('Y and X must have the number of variables.\n')} # X and Y must have the same number of features
-    
-    cat('Sigma not provided: plugging an over-estimate.\n')
-    
-    if(is.null(UY) & is.null(precUY)){
-      
-      precUY <- Matrix::Diagonal(dim(Y)[1])} # If the matrix U for Y and its inverse are not provided, independent observations by default
-    
-    if(is.null(precUY) & !is.null(UY)){ # Provide U for Y but not its inverse
-      
-      UY <- Matrix::Matrix(UY) 
-      precUY <- Matrix::solve(UY)}
-    
-    if(!is.null(precUY)){
-      
-      precUY <- Matrix::Matrix(precUY)} # Provide the inverse of U for Y
-    
-    # Estimate Sigma
-    Y <- Matrix::Matrix(Y) # Memory efficiency
-    Ybar <- Matrix::colMeans(Y)
-    Sigma <- Matrix::crossprod(Matrix::t(1/(nrow(Y) - 1)*((Matrix::t(Y) - Ybar))),  Matrix::tcrossprod(precUY, Matrix::t(Y) - Ybar)) # Sigma estimate
-    
-  }else{# Sigma is known and provided by the user
-    
-    if(!matrixNormal::is.positive.definite(Sigma)){ # Check for positive-definiteness for Sigma
-      
-      stop('Sigma must be positive-definite.\n')}else{
-        
-        Sigma <- Matrix::Matrix(Sigma) # Memory efficiency
-      }
+  # Set up data and dependency structures, estimate Sigma if needed
+  setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY)
+  X <- setup_model$X
+  U <- setup_model$U
+  Sigma <- setup_model$Sigma
+ 
+  if(!is.null(NC) && !"NC" %in% names(formals(cl_fun))) {
+    stop("'cl_fun' must have 'NC' as an argument when 'NC' is not NULL.\n")
   }
-  
-  #### Cluster data ############################################################
-  
-  if(is.null(cl)){cl <- cl_fun(X, NC)}
-  NC <- length(unique(cl))
+
+  if(is.null(NC)){
+    cl_fun_wrapper <- function(X){cl_fun(X)}
+    }else{
+      cl_fun_wrapper <- function(X){cl_fun(X, NC=NC)}
+    }
+
+  # --------------- Cluster data ---------------
+
+  if(is.null(cl)){cl <- cl_fun_wrapper(X)}
+  n_clusters_on_X <- length(unique(cl))
+  if(!is.null(NC)){
+    if(n_clusters_on_X != NC) {
+      stop("The number of clusters returned by 'cl_fun' does not match 'NC'.\n")
+    }
+  }
 
   # Check for correct clustering specification
-  if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.\n')}
-  if(!all(clusters%in%cl)){stop('The clusters to compare need to be among those retrieved by the algorithm: clusters must take values in cl.\n')}
+  if(!all(clusters %in% c(1:n_clusters_on_X))) {stop('clusters must be a vector of two integers between 1 and ', n_clusters_on_X, '.\n')}
+  if(!all(clusters%in%cl)){stop('The clusters to compare need to be among those retrieved by the algorithm: clusters is set to ', paste(clusters, collapse = ", "), ' and the retrieved clusters are ', paste(unique(cl), collapse = ", "), '.\n')}
   
-  #### Test for the difference of cluster means ################################
+  # --------------- Test for the difference of cluster means ---------------
   
   # Select individuals from each cluster
   n1 <- sum(cl == clusters[1])
@@ -138,8 +148,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # Difference of cluster means 
   diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X) 
   
-  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x},
-  # where V = nu^T U nu Sigma
+  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x}, where V = nu^T U nu Sigma
   norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
   V_g1g2 <- norm2U_nu[1]*Sigma
   V_g1g2_inv <- Matrix::solve(V_g1g2)
@@ -155,8 +164,9 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   diff_means <- as.numeric(diff_means)
   k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
   k2_constant <- (prop_k2 - 1)*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
-  orig_k1 <- t(X[cl == clusters[1], ])
-  orig_k2 <- t(X[cl == clusters[2], ])
+  
+  orig_k1 <- Matrix::t(X[cl == clusters[1], , drop = FALSE])
+  orig_k2 <- Matrix::t(X[cl == clusters[2], , drop = FALSE])
       
   Xphi <- X
   
@@ -167,11 +177,11 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     # Compute perturbed data set for positive phi's
     Xphi <- X
     phi_minus_stat <- phi[j] - stat_V 
-    Xphi[cl == clusters[1], ] <- t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
-    Xphi[cl == clusters[2], ] <- t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
+    Xphi[cl == clusters[1], ] <- Matrix::t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
+    Xphi[cl == clusters[2], ] <- Matrix::t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
     
     # Recluster the perturbed data set
-    cl_Xphi <- cl_fun(Xphi, NC)
+    cl_Xphi <- cl_fun_wrapper(Xphi)
 
     if(preserve.cl(cl, cl_Xphi, clusters)) {
       log_survives <- -(phi[j])^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
@@ -191,7 +201,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # Return nothing if nothing survives
   if(survives == 0) {
-    warning("Oops - we didn't generate any samples that preserved the clusters! Try re-running with a larger value of ndraws.")
+    warning("No samples that preserved the clusters were generated. Try re-running with a larger value of ndraws.")
     return(list(stat = stat_V, pval=NA, stderr=NA, clusters=cl))
   }
       

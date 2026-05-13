@@ -17,3 +17,5 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(PCIdep)
 ```
+
+This vignette is under construction and will be expanded in a future update.

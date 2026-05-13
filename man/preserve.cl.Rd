@@ -2,21 +2,44 @@
 % Please edit documentation in R/util.R
 \name{preserve.cl}
 \alias{preserve.cl}
-\title{Assess whether a pair of clusters remains invariant across two partitions.}
+\title{Check for equivalent partitions}
 \usage{
 preserve.cl(cl, cl_phi, clusters)
 }
 \arguments{
-\item{cl}{A vector of size \eqn{n} with integers in \eqn{1,\ldots,n} defining the classes of the first partition.}
+\item{cl}{Integer vector of length \eqn{n} giving the initial cluster
+assignment.}
 
-\item{cl_phi}{A vector of size  \eqn{n} with integers in \eqn{1,\ldots,n} defining the classes of the second partition.}
+\item{cl_phi}{Integer vector of length \eqn{n} giving the cluster assignment
+after perturbation.}
 
-\item{clusters}{A vector of two integers chosen among the coordinates of \code{cl}, denoting the pair of clusters in \code{cl} to be analyzed.}
+\item{clusters}{Integer vector of length 2 specifying the labels of the
+clusters in \code{cl} to be tracked.}
 }
 \value{
-Whether the cluster \code{clusters}[1] and the cluster \code{clusters}[2] in \code{cl} remain invariant in \code{cl_phi}, independently of label modifications.
+Logical. \code{TRUE} if both clusters remain invariant in
+  \code{cl_phi} (up to label permutation), and \code{FALSE} otherwise.
 }
 \description{
-Assess whether a pair of clusters remains invariant across two partitions.
+Assesses whether two selected clusters from an initial partition remain invariant under a second partition, up to relabeling. Invariance means that:
+(i) all observations from each selected cluster remain grouped together, and (ii) no additional observations are assigned to these clusters.
 }
-\keyword{internal}
+\examples{
+# Original partition
+cl <- c(1, 1, 2, 2, 3, 3)
+
+# Same selected clusters up to relabeling
+cl_phi <- c(4, 4, 5, 5, 6, 6)
+preserve.cl(cl, cl_phi, clusters = c(1, 2))
+
+# Cluster 1 is no longer preserved
+cl_phi2 <- c(4, 5, 5, 5, 6, 6)
+preserve.cl(cl, cl_phi2, clusters = c(1, 2))
+
+}
+\seealso{
+Other Utilities: 
+\code{\link{is.CS}()},
+\code{\link{setup.model}()}
+}
+\concept{Utilities}
