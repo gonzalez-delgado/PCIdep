@@ -6,15 +6,13 @@ Author: Javier González-Delgado
 Maintainer: Javier González-Delgado <javier.gonzalez-delgado@ensai.fr>
 Description: PCIdep extends the framework introduced in the R packages clusterpval and KMeansInference for arbitrary dependence structures between observations and features.
 Encoding: UTF-8
-Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, RColorBrewer, graphics
+Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, RColorBrewer, graphics, future
 Remotes: lucylgao/clusterpval, yiqunchen/KmeansInference
 RoxygenNote: 7.3.3
 NeedsCompilation: no
 Packaged: 2023-01-24 12:34:47 UTC; jgonzale
 License: CeCILL-B free software license agreement
-Suggests: 
-    knitr,
-    rmarkdown
+Suggests: knitr, rmarkdown, dbscan, MASS
 VignetteBuilder: knitr
 URL: https://github.com/gonzalez-delgado/PCIdep,
      https://gonzalez-delgado.github.io/PCIdep/
