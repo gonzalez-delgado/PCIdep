@@ -10,10 +10,10 @@ where  $`\boldsymbol\mu\in\mathcal{M}_{n\times p}(\mathbb{R})`$ and $`\mathbf{U}
 
 $\texttt{PCIdep}$ is the natural extension to the general matrix normal model of the work in [clusterpval](https://github.com/lucylgao/clusterpval) [2] and [KMeansInference](https://github.com/yiqunchen/KmeansInference) [3] where the framework for selective inference after hierarchical clustering and $k$-means respectively is presented for $\mathbf{U}=\mathbf{I}_n$ and $\mathbf{\Sigma}=\sigma\mathbf{I}_p$, allowing for the estimation of the unknown parameter $\sigma$. Inference after any user-specified clustering algorithm can be performed via Monte Carlo approximation. 
 
-#### Necessary conditions on U
+### User guide
 
-The selective type I error control is ensured if $\mathbf{U}$ has a Compound Symmetry (CS) structure, that is, if $\mathbf{U} = (a-b)\mathbf{I}_n + b\mathbf{1}_n$, for some $a/(n-1)<b<a$. However, the method is <i>robust to $\mathbf{U}$ not being CS</i> if the deviation is not large. We recommend the practitioner to use the method for <i>known $\mathbf{U}$ matrices that do not deviate substantially from the CS structure</i> (e.g. AR(1), Diagonal, Banded or Toeplitz, depending on the parameters).
- 
+For a comprehensive introduction to the package and its functionalities, please refer to the [package vignettes](https://gonzalez-delgado.github.io/PCIdep/articles/index.html). 
+
 ### Installing PCIdep
 
 $\texttt{PCIdep}$ can be installed using
@@ -23,94 +23,3 @@ devtools::install_github("https://github.com/gonzalez-delgado/PCIdep")
 ```
 
 For any inquires, please file an [issue](https://github.com/gonzalez-delgado/PCIdep/issues) or [contact us](mailto:javier.gonzalez-delgado@ensai.fr).
-
-### Selective inference after hierarchical clustering
-
-The function [test.clusters.hc](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.hc.R) adapts the framework presented in [clusterpval](https://github.com/lucylgao/clusterpval) to the general matrix normal model. It allows selective inference after hierarchical clustering (HC) with multiple types of linkage. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error.
-
-#### Example
-
-```
-# Model parameters
-n <- 50
-p <- 20
-M <- Matrix::Matrix(0, nrow = n , ncol = p) # Mean matrix
-Sigma <- stats::toeplitz(seq(1, 0.1, length = p)) # Sigma: dependence between features
-U <- matrixNormal::I(n) # U: dependence between observations
-
-# Simulate matrix normal samples
-X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
-Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
-
-# HC with average linkage under a global null hypothesis
-test.clusters.hc(X, U, Sigma, NC = 3, clusters = sample(1:3, 2), plot = TRUE, linkage = "average")
-
-# HC with complete linkage under the global null hypothesis and over-estimation of Sigma
-test.clusters.hc(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2), plot = TRUE, linkage = "complete")
-```
-
-### Selective inference after $k$-means clustering
-
-The function [test.clusters.km](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.km.R) adapts the framework presented in [KMeansInference](https://github.com/yiqunchen/KmeansInference) to the general matrix normal model. It allows selective inference after $k$-means clustering. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error.
-
-#### Example
-
-```
-# Model parameters
-n <- 50
-p <- 20
-M <- Matrix::Matrix(0, nrow = n , ncol = p) # Mean matrix
-Sigma <- stats::toeplitz(seq(1, 0.1, length = p)) # Sigma: dependence between features
-U <- matrixNormal::I(n) # U: dependence between observations
-
-# Simulate matrix normal samples
-X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
-Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
-
-# k-means under the global null hypothesis
-test.clusters.km(X, U, Sigma, NC = 3, clusters = sample(1:3, 2))
-
-# k-means under the global null hypothesis and over-estimation of Sigma
-test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
-```
-
-### Selective inference after any user-specified clustering algorithm
-
-The function [test.clusters.MC](https://github.com/gonzalez-delgado/PCIdep/blob/main/R/test.clusters.MC.R) adapts the framework presented in [clusterpval](https://github.com/lucylgao/clusterpval) to the general matrix normal model, for any user-specified clustering algorithm. The $p$-value is computed using a Monte Carlo approximation. Over-estimation of $`\mathbf{\Sigma}`$ for known $`\mathbf{U}`$ is possible while asymptotically respecting the selective type I error.
-
-#### Example
-
-```
-# Model parameters
-n <- 50
-p <- 20
-M <- Matrix::Matrix(0, nrow = n , ncol = p) # Mean matrix
-Sigma <- stats::toeplitz(seq(1, 0.1, length = p)) # Sigma: dependence between features
-U <- matrixNormal::I(n) # U: dependence between observations
-
-# Simulate matrix normal sample
-X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
-
-# Using HDBSCAN clustering from dbscan package. This algorithm selects automatically the number of clusters NC.
-# Additional clustering parameters must be set as default values when defining cl_fun.
-# install.packages('dbscan')
-
-hdbscan.clustering <- function(X, NC = NULL, min.occupancy = 5){  
-  X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
-  return(X.clus$cluster + 1)
-}
-
-# First cluster the data
-clusters_X <- hdbscan.clustering(X)
-# Then test for the equality of clusters 3 and 1
-test.clusters.MC(X, U = U, Sigma = Sigma, clusters = c(3,1), cl = clusters_X, cl_fun = hdbscan.clustering, NC = NULL, ndraws = 500)
-```
-
-
-### References
-
-[1] J. González-Delgado, M. Deronzier, J. Cortés and P. Neuvial, Post-clustering Inference under Dependence. [arXiv:2310.11822](http://arxiv.org/abs/2310.11822), 2023.
-
-[2] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 119(545):332–342, 2024.
-
-[3]  Y. T. Chen and D. M. Witten. Selective inference for k-means clustering. Journal of Machine Learning Research, 24(152):1–41, 2023.
