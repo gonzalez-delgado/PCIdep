@@ -12,7 +12,7 @@ $\texttt{PCIdep}$ is the natural extension to the general matrix normal model of
 
 ### User guide
 
-For a comprehensive introduction to the package and its functionalities, please refer to the [package vignettes](https://gonzalez-delgado.github.io/PCIdep/articles/index.html). 
+For a comprehensive introduction to the package and its functionalities, please refer to the [user guide](https://gonzalez-delgado.github.io/PCIdep/index.html). 
 
 ### Installing PCIdep
 
