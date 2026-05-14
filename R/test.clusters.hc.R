@@ -200,6 +200,8 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
             stats::dnorm(phi[j], mean = stat_V, sd = 1, log = TRUE)
         }
 
+        return(NA)
+
       }, future.seed=TRUE))
       
       # Trim down to only survives

@@ -59,7 +59,7 @@
 #' n <- 50
 #' p <- 20
 #'
-#' # Simulatin under the null hypothesis
+#' # Simulating under the null hypothesis
 #' M <- Matrix::Matrix(0, nrow = n, ncol = p)
 #' Sigma <- stats::toeplitz(seq(1, 0.1, length.out = p))
 #' U <- matrixNormal::I(n)

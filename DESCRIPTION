@@ -1,12 +1,10 @@
 Package: PCIdep
 Type: Package
-Title: Post-clustering inference under dependence.
+Title: Post-clustering inference under dependence
 Version: 0.1.0
-Author: Javier González-Delgado
-Maintainer: Javier González-Delgado <javier.gonzalez-delgado@ensai.fr>
 Description: PCIdep extends the framework introduced in the R packages clusterpval and KMeansInference for arbitrary dependence structures between observations and features.
 Encoding: UTF-8
-Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, RColorBrewer, graphics, future
+Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, RColorBrewer, graphics, future, future.apply
 Remotes: lucylgao/clusterpval, yiqunchen/KmeansInference
 RoxygenNote: 7.3.3
 NeedsCompilation: no

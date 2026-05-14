@@ -77,7 +77,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
       }else{
         if(!is.null(Y) & sample_split){ # Y is provided but sample splitting is requested
         
-          warning('Y have been provided and will be used to estimate Sigma. The sample_split argument will be ignored.')
+          warning('Y has been provided and will be used to estimate Sigma. The sample_split argument will be ignored.')
 
         }
       }}
@@ -86,7 +86,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
     
     if(dim(Y)[2] != dim(X)[2]){
       
-      stop('Y and X must have the number of variables')} # X and Y must have the same number of features
+      stop('Y and X must have the same number of variables')} # X and Y must have the same number of features
     
     # ----------- Get U^{-1} associated to Y -----------
 

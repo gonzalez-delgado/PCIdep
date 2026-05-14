@@ -22,7 +22,7 @@ This vignette is an adaptation of Lucy L. Gao's great [tutorial](https://lucylga
 
 ## The Palmer Penguins Data
 
-The Palmer Penguins dataset contains measurements of penguin species collected from the Palmer Station in Antarctica. It includes data on body measurements (bill length, flipper length, body mass) and other characteristics for three penguin species: Adelie, Chinstrap, and Gentoo. This dataset is an useful toy example for demonstrating clustering and classification techniques.
+The Palmer Penguins dataset contains measurements of penguin species collected from the Palmer Station in Antarctica. It includes data on body measurements (bill length, flipper length, body mass) and other characteristics for three penguin species: Adelie, Chinstrap, and Gentoo. This dataset is a useful toy example for demonstrating clustering and classification techniques.
 
 **Reference:** Horst, A. M., Hill, A. P., & Gorman, K. B. (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. Retrieved from https://github.com/allisonhorst/palmerpenguins
 
@@ -125,12 +125,12 @@ For details on the parameters and their usage, please refer to the `test.cluster
 # Test the HAC clusters
 
 # Difference between clusters 4 and 2 (different species)
-hc_test_12 <- PCIdep::test.clusters.hc(X=X, Y=Y, NC = 5, clusters = c(4, 2), linkage = "ward.D")
-hc_test_12$pvalue 
+hc_test_42 <- PCIdep::test.clusters.hc(X=X, Y=Y, NC = 5, clusters = c(4, 2), linkage = "ward.D")
+hc_test_42$pvalue 
 
 # Difference between clusters 2 and 3 (same species)
-hc_test_13 <- PCIdep::test.clusters.hc(X=X, Y=Y, NC = 5, clusters = c(2, 3), linkage = "ward.D")
-hc_test_13$pvalue
+hc_test_23 <- PCIdep::test.clusters.hc(X=X, Y=Y, NC = 5, clusters = c(2, 3), linkage = "ward.D")
+hc_test_23$pvalue
 ```
 
 The results correspond to the expected behavior: the difference between clusters 4 and 2 is significant (as they contain different species), while the difference between clusters 2 and 3 is not significant (as they contain individuals from the same species).

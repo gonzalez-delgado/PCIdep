@@ -1,7 +1,7 @@
 citHeader("To cite PCIdep, please use:")
 
-citEntry(
-  entry = "Article",
+bibentry(
+  bibtype = "Article",
   title = "Post-clustering Inference under Dependence",
   author = c(
     person("Javier", "González-Delgado"),
@@ -15,8 +15,8 @@ citEntry(
   url = "https://doi.org/10.48550/arXiv.2310.11822"
 )
 
-citEntry(
-  entry = "Manual",
+bibentry(
+  bibtype = "Manual",
   title = "PCIdep: Post-clustering inference under dependence",
   author = person("Javier", "González-Delgado"),
   year = "2026",

@@ -72,7 +72,7 @@ interface:
 > **`cl_fun(X, NC, ...)` → integer vector of length `nrow(X)`**
 >
 > * `X` is the data matrix passed to `test.clusters.MC`.
-> * `NC` is the number of clusters (if required by the clustering algorithm). If chosen automatically, the `NC` argument can be ommited.
+> * `NC` is the number of clusters (if required by the clustering algorithm). If chosen automatically, the `NC` argument can be omitted.
 > * The return value must be an integer (or integer-coercible) vector where
 >   each element is the cluster label for the corresponding observation.
 
