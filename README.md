@@ -22,4 +22,4 @@ $\texttt{PCIdep}$ can be installed using
 devtools::install_github("https://github.com/gonzalez-delgado/PCIdep")
 ```
 
-For any inquires, please file an [issue](https://github.com/gonzalez-delgado/PCIdep/issues) or [contact us](mailto:javier.gonzalez-delgado@ensai.fr).
+For any inquiries, please file an [issue](https://github.com/gonzalez-delgado/PCIdep/issues) or [contact us](mailto:javier.gonzalez-delgado@ensai.fr).
