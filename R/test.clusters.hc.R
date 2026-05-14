@@ -170,7 +170,6 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       # Code adapted from clusterval package (Gao et al. 2022).
       
       prop_k2 <- n2/(n1+n2)
-      log_survives <- rep(NA, ndraws)
       phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
       
       diff_means <- as.numeric(diff_means)
@@ -182,6 +181,8 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       Xphi <- X
 
       log_survives <- unlist(future.apply::future_lapply(X = 1:ndraws, FUN = function(j) {
+
+        if(phi[j] < 0) return(NA)
 
         # Compute perturbed data set for positive phi's
         Xphi <- X
