@@ -1,117 +1,120 @@
-#' Test for the difference of two cluster means after k-means clustering, for matrix normal model with arbitrary scale matrices.
+#' @title Post-clustering inference after k-means clustering
+#' @family post-clustering inference functions
+#' @description
+#' Performs post-clustering inference for the difference between the means of two clusters obtained by k-means clustering, under a general matrix normal
+#' model.
 #' 
-#' @param X A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.
-#' @param U A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.
-#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).
-#' @param Y If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.
-#' @param UY If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.
-#' @param precUY The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.
-#' @param NC The number of clusters to choose.
-#' @param clusters A vector of two integers from 1 to \code{NC} indicating the pair of clusters whose means have to be compared.
-#' @param itermax The iter.max parameter of the k-means algorithm in kmeans_estimation function of KmeansInference package.
-#' @param tol The tol_eps parameter of the k-means algorithm in kmeans_estimation function of KmeansInference package.
+#' The covariance structure between features \code{Sigma} is estimated if not provided, respecting the selective type I error control. The covariance
+#' matrix between observations \code{U} is assumed known and should have a compound symmetry structure (see details).
+#'
+#' @param X A numeric \eqn{n \times p} matrix assumed to arise from a matrix normal distribution \eqn{\mathcal{MN}(M, U, \Sigma)}.
+#' @param U An \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows of \code{X}. If \code{NULL},
+#'   observations are assumed to be independent and \code{U} is set to the \eqn{n \times n} identity matrix.
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns of \code{X}. If \code{NULL},
+#'   \code{Sigma} is over-estimated from an auxiliary independent sample \code{Y} (in the sense of the Loewner partial order).
+#' @param Y If \code{Sigma} is \code{NULL}, an independent copy of \code{X} used to estimate \code{Sigma}. It must have the same number of columns as
+#'   \code{X}.
+#' @param UY If \code{Sigma} is \code{NULL}, an \eqn{n_Y \times n_Y} positive-definite matrix describing the dependence structure between the
+#'   rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity matrix is used by default.
+#' @param precUY The inverse of \code{UY}. Providing \code{precUY} may improve computational efficiency. If \code{UY} is provided but \code{precUY} is
+#'   \code{NULL}, it is computed internally.
+#' @param NC Integer scalar giving the number of clusters.
+#' @param clusters Integer vector of length 2 specifying the pair of clusters to compare. Entries must belong to \code{1:NC}.
+#' @param itermax Integer. Maximum number of iterations for the k-means algorithm, passed to \code{KmeansInference::kmeans_inference}.
+#' @param tol Numeric tolerance parameter controlling convergence of the k-means algorithm, passed as \code{tol_eps}.
+#' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
+#' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
 #' 
-#' @return 
-#' \itemize{
-#'   \item pvalue - The p-value for the difference of cluster means.
-#'   \item stat - The test statistic.
-#'   \item km - The partition of the \code{n} observations retrieved by the clustering algorithm.
+#' @details
+#' Selective type I error control is guaranteed when the row covariance matrix
+#' \eqn{\mathbf{U}} has a compound symmetry (CS) structure, i.e.,
+#' \deqn{
+#'   \mathbf{U} = (a - b)\mathbf{I}_n + b\mathbf{1}_n,
+#' }
+#' for some \eqn{a/(n - 1) < b < a}. In practice, the method is robust to moderate deviations from the CS structure. In particular, reliable 
+#' performance is typically observed when \eqn{\mathbf{U}} remains close to CS, for example in autoregressive (AR(1)), diagonal, banded, or Toeplitz 
+#' covariance structures, depending on their parameters. We therefore recommend applying the method primarily in settings where \eqn{\mathbf{U}} is known and
+#' does not deviate substantially from the compound symmetry structure.
+#'  
+#' When \code{Sigma = NULL}, the column covariance matrix is estimated from an auxiliary independent sample \code{Y}. When \code{U = NULL}, row-wise
+#' independence is assumed.
+#' 
+#' The clustering step is performed using the function \code{KmeansInference::kmeans_inference}, which provides both the clustering
+#' partition and the truncation region associated with the selection event. The p-value is computed using an exact characterization of the truncation
+#' region for the Euclidean norm, following Chen and Witten (2022), and then mapped to the corresponding statistic under the general matrix normal model.
+#'
+#' @return
+#' A named list with the following components:
+#' \describe{
+#'   \item{pvalue}{The p-value for testing equality of the two selected cluster
+#'   means.}
+#'   \item{stat}{The observed test statistic.}
+#'   \item{km}{An integer vector of length \eqn{n} giving the cluster
+#'   membership of each observation returned by the k-means algorithm.}
+#'   \item{Sigma}{The column covariance matrix used in the test, either provided
+#'   by the user or estimated from \code{Y}.}
 #' }
 #'
 #' @examples
-#' 
 #' n <- 50
 #' p <- 20
-#' M <- Matrix::Matrix(0, nrow = n , ncol = p) # Mean matrix
-#' Sigma <- stats::toeplitz(seq(1, 0.1, length = p)) # Sigma: dependence between features
-#' U <- matrixNormal::I(n) # U: dependence between observations
-#' X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
-#' Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
 #'
-#' # k-means under the global null hypothesis
-#' test.clusters.km(X, U, Sigma, NC = 3, clusters = sample(1:3, 2))
-#' # k-means under the global null hypothesis and over-estimation of Sigma
-#' test.clusters.km(X, U, Sigma = NULL, Y = Y, NC = 3, clusters = sample(1:3, 2))
+#' # Simulating under the null hypothesis
+#' M <- Matrix::Matrix(0, nrow = n, ncol = p)
+#' Sigma <- stats::toeplitz(seq(1, 0.1, length.out = p))
+#' U <- matrixNormal::I(n)
+#'
+#' X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
+#' Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
+#'
+#' # k-means with known Sigma
+#' test.km <- test.clusters.km(
+#'   X = X, U = U, Sigma = Sigma,
+#'   NC = 3, clusters = sample(1:3, 2)
+#' )
+#' test.km$pvalue
+#'
+#' # k-means with over-estimation of Sigma
+#' test.km <- test.clusters.km(
+#'   X = X, U = U, Sigma = NULL, Y = Y,
+#'   NC = 3, clusters = sample(1:3, 2)
+#' )
+#' test.km$pvalue
 #'
 #' @references
-#'  [1] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022.
-#'  [2] Y. T. Chen and D. M. Witten. Selective inference for k-means clustering, 2022. arXiv:2203.15267.
-#'  
-#' @export
+#' Gao, L. L., Bien, J., and Witten, D. (2022).
+#' Selective inference for hierarchical clustering.
+#' \emph{Journal of the American Statistical Association}, 117(540), 2533--2547.
+#'
+#' Chen, Y. T., and Witten, D. M. (2023).
+#' Selective inference for k-means clustering.
+#' \emph{Journal of Machine Learning Research}, 24(152), 1-41.
 #' 
+#' González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2023)
+#' Post-clustering Inference under Dependence. 
+#' \emph{arXiv.2310.11822}.
+#'
+#' @export
 
-test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6){
+test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6, sample_split = FALSE, nY = NULL){
   
-  #### Initial checks and pre-processing #######################################
+  # --------------- Initial checks and pre-processing ---------------
 
-  # Check U
-  if(is.null(U)){
-    
-    U <- Matrix::Diagonal(dim(X)[1]) # Independent observations by default
-    cat('U is not provided: observations are considered independent with unit variance.')  
-    
-  }else{ 
-    
-    if(!matrixNormal::is.positive.definite(U)){ # Check for positive-definiteness of U
-      
-      stop('U must be positive-definite.')}else{ 
-        
-        if(!is.CS(U)){warning('U is not Compound Symmetry: selective type I error control might be lost if the deviation from the CS structure is large.')}
-        U <- Matrix::Matrix(U) # Memory efficiency
-        
-      }}
-  
   # Check for correct clustering specification
   if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
   
-  # Check Sigma
-  # If Sigma is not provided, estimate it
-  if(is.null(Sigma)){
-    
-    if(is.null(Y)){
-      
-      stop('Sigma is not provided. An i.i.d. sample Y must be provided to allow its over-estimation.')} # Need to provide i.i.d. copy of Y if Sigma is NULL
-    
-    if(dim(Y)[2] != dim(X)[2]){
-      
-      stop('Y and X must have the number of variables')} # X and Y must have the same number of features
-    
-    cat('Sigma not provided: plugging an over-estimate.\n')
-    
-    if(is.null(UY) & is.null(precUY)){
-      
-      precUY <- Matrix::Diagonal(dim(Y)[1])} # If the matrix U for Y and its inverse are not provided, independent observations by default
-    
-    if(is.null(precUY) & !is.null(UY)){ # Provide U for Y but not its inverse
-      
-      UY <- Matrix::Matrix(UY) 
-      precUY <- Matrix::solve(UY)}
-    
-    if(!is.null(precUY)){
-      
-      precUY <- Matrix::Matrix(precUY)} # Provide the inverse of U for Y
-    
-    # Estimate Sigma
-    Y <- Matrix::Matrix(Y) # Memory efficiency
-    Ybar <- Matrix::colMeans(Y)
-    Sigma <- Matrix::crossprod(Matrix::t(1/(nrow(Y) - 1)*((Matrix::t(Y) - Ybar))),  Matrix::tcrossprod(precUY, Matrix::t(Y) - Ybar)) # Sigma estimate
-    
-  }else{# Sigma is known and provided by the user
-    
-    if(!matrixNormal::is.positive.definite(Sigma)){ # Check for positive-definiteness for Sigma
-      
-      stop('Sigma must be positive-definite.')}else{
-        
-        Sigma <- Matrix::Matrix(Sigma) # Memory efficiency
-      }
-  }
-  
-  #### Cluster data ############################################################
+  # Set up data and dependency structures, estimate Sigma if needed
+  setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY)
+  X <- setup_model$X
+  U <- setup_model$U
+  Sigma <- setup_model$Sigma
+ 
+  # --------------- Cluster data ---------------
   
   # K-means clustering from KmeansInference package 
   test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = NULL, sig = 1, tol_eps = tol, iter.max = itermax)
   
-  #### Test for the difference of cluster means ################################
+  # --------------- Test for the difference of cluster means ---------------
   
   # Select individuals from each cluster
   km_at_cl <- as.vector(test_kmeans$final_cluster) # Clustering partition
@@ -123,8 +126,7 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # Difference of cluster means 
   diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X) 
   
-  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x},
-  # where V = nu^T U nu Sigma
+  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x}, where V = nu^T U nu Sigma
   norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
   V_g1g2 <- norm2U_nu[1]*Sigma
   V_g1g2_inv <- Matrix::solve(V_g1g2)

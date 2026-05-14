@@ -2,7 +2,7 @@
 % Please edit documentation in R/test.clusters.MC.R
 \name{test.clusters.MC}
 \alias{test.clusters.MC}
-\title{Test for the difference of two cluster means after any clustering algorithm, for matrix normal model with arbitrary scale matrices.}
+\title{Post-clustering inference after any clustering algorithm}
 \usage{
 test.clusters.MC(
   X,
@@ -15,74 +15,130 @@ test.clusters.MC(
   cl_fun,
   NC = NULL,
   cl = NULL,
-  ndraws = 2000
+  ndraws = 2000,
+  sample_split = FALSE,
+  nY = NULL
 )
 }
 \arguments{
-\item{X}{A \eqn{n \times p} matrix drawn from a \eqn{n \times p} matrix normal distribution \eqn{\mathcal{MN}(}\code{M}, \code{U}, \code{Sigma}\eqn{)}. \code{X} must have \eqn{n} rows and \eqn{p} columns.}
+\item{X}{A numeric \eqn{n \times p} matrix assumed to arise from a matrix normal distribution \eqn{\mathcal{MN}(M, U, \Sigma)}.}
 
-\item{U}{A \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows in \code{X}. If \code{NULL}, observations are considered independent and \code{U} is set to the \eqn{n \times n} identity matrix.}
+\item{U}{An \eqn{n \times n} positive-definite matrix describing the dependence structure between the rows of \code{X}. If \code{NULL},
+observations are assumed to be independent and \code{U} is set to the identity matrix.}
 
-\item{Sigma}{A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns in \code{X}. If \code{NULL}, \code{Sigma} is over-estimated (in the sense of the Loewner partial order).}
+\item{Sigma}{A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns of \code{X}. If \code{NULL},
+\code{Sigma} is over-estimated from an auxiliary independent sample \code{Y} (in the sense of the Loewner partial order).}
 
-\item{Y}{If \code{Sigma} is \code{NULL}, an i.i.d. copy of \code{X} allowing its estimation. \code{Y} must have the same number of columns as \code{X}.}
+\item{Y}{If \code{Sigma} is \code{NULL}, an independent copy of \code{X} used to estimate \code{Sigma}. It must have the same number of columns as
+\code{X}.}
 
-\item{UY}{If \code{Sigma} is \code{NULL}, a positive-definite matrix describing the dependence structure between the rows in \code{Y}. If \code{NULL} and its inverse is not provided, set to the identity matrix by default.}
+\item{UY}{If \code{Sigma} is \code{NULL}, an \eqn{n_Y \times n_Y} positive-definite matrix describing the dependence structure between the
+rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity matrix is used by default.}
 
-\item{precUY}{The inverse matrix of \code{UY}, that can be provided to increase computational efficiency. If \code{UY} is not \code{NULL} and \code{precUY} is \code{NULL}, \code{precUY} is obtained by inverting \code{UY}.}
+\item{precUY}{The inverse of \code{UY}. Providing \code{precUY} may improve computational efficiency. If \code{UY} is provided but \code{precUY} is
+\code{NULL}, it is computed internally.}
 
-\item{clusters}{A vector of two integers from 1 to \code{NC} indicating the pair of clusters whose means have to be compared.}
+\item{clusters}{Integer vector of length 2 specifying the pair of clusters to compare.}
 
-\item{cl_fun}{A function returning assignments to clusters. The function must take as input the data matrix \code{X} and the number of clusters \code{NC}.}
+\item{cl_fun}{A function implementing the clustering procedure. It must take as input the data matrix \code{X} and the number of clusters \code{NC}
+(if required), and return an integer vector of length \eqn{n} containing cluster assignments.}
 
-\item{NC}{The number of clusters to choose, that will be passed as argument to \code{cl_fun}. Must be set to \code{NULL} if not required by \code{cl_fun}.}
+\item{NC}{Integer scalar specifying the number of clusters to be used by \code{cl_fun}. If the clustering algorithm determines the number of
+clusters automatically, this argument should be set to \code{NULL}.}
 
-\item{cl}{The result of clustering \code{X} using \code{cl_fun}. It can useful to precompute this quantity before choosing \code{clusters}.}
+\item{cl}{Optional integer vector of length \eqn{n} giving a precomputed clustering of \code{X}. If provided, \code{cl_fun} is not called.}
 
-\item{ndraws}{The number of Monte Carlo iterations.}
+\item{ndraws}{Integer. Number of Monte Carlo samples used to approximate the p-value.}
+
+\item{sample_split}{Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.}
+
+\item{nY}{Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.}
 }
 \value{
-\itemize{
-  \item pvalue - The p-value for the difference of cluster means.
-  \item stat - The test statistic.
-  \item stdrr - The Monte Carlo standard error.
-  \item clusters - The partition of the \code{n} observations retrieved by the clustering algorithm.
+A named list with the following components:
+\describe{
+  \item{pvalue}{The p-value for testing equality of the two selected cluster
+  means.}
+  \item{stat}{The observed test statistic.}
+  \item{stderr}{Monte Carlo standard error of the estimated p-value.}
+  \item{clusters}{An integer vector of length \eqn{n} giving the cluster
+  membership of each observation.}
 }
 }
 \description{
-Test for the difference of two cluster means after any clustering algorithm, for matrix normal model with arbitrary scale matrices.
+Performs post-clustering inference for the difference between the means of two clusters obtained from a user-specified clustering algorithm, under a
+general matrix normal model.
+
+The clustering algorithm is given by a user-provided function \code{cl_fun}, allowing this method to be applied to a wide range of clustering procedures.
+
+The covariance structure between features \code{Sigma} is estimated if not provided, respecting the selective type I error control. The covariance
+matrix between observations \code{U} is assumed known and should have a compound symmetry structure (see details).
+}
+\details{
+The method applies to any clustering algorithm that can be expressed through a function \code{cl_fun} returning cluster assignments. The selective
+inference procedure is based on a Monte Carlo approximation of the truncation region induced by the clustering step.
+
+Selective type I error control is guaranteed when the row covariance matrix \eqn{\mathbf{U}} has a compound symmetry (CS) structure, i.e.,
+\deqn{
+  \mathbf{U} = (a - b)\mathbf{I}_n + b\mathbf{1}_n,
+}
+for some \eqn{a/(n - 1) < b < a}. In practice, the method is robust to moderate deviations from the CS structure. In particular, reliable 
+performance is typically observed when \eqn{\mathbf{U}} remains close to CS, for example in autoregressive (AR(1)), diagonal, banded, or Toeplitz 
+covariance structures, depending on their parameters. We therefore recommend applying the method primarily in settings where \eqn{\mathbf{U}} is known and
+does not deviate substantially from the compound symmetry structure.
+
+When \code{Sigma = NULL}, the column covariance matrix is estimated from an auxiliary independent sample \code{Y}. When \code{U = NULL}, row-wise
+independence is assumed.
 }
 \examples{
-
 n <- 50
 p <- 20
-M <- Matrix::Matrix(0, nrow = n , ncol = p) # Mean matrix
-Sigma <- stats::toeplitz(seq(1, 0.1, length = p)) # Sigma: dependence between features
-U <- matrixNormal::I(n) # U: dependence between observations
+
+# Simulating under the alternative hypothesis
+M <- Matrix::Matrix(0, nrow = n, ncol = p)
+M[1:floor(n/3),] <- -1
+M[(floor(2*n/3)+1):n,] <- 1
+Sigma <- stats::toeplitz(seq(1, 0.1, length.out = p))
+U <- matrixNormal::I(n)
+
 X <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
-Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma) # i.i.d. copy of X
+Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
 
-# Using HDBSCAN clustering from dbscan package. This algorithm selects 
-# automatically the number of clusters NC.
-# Additional clustering parameters must be set as default values
-# when defining cl_fun.
+# Example using HDBSCAN clustering (it chooses the number of clusters)
+# install.packages("dbscan")
 
-# install.packages('dbscan')
-
-hdbscan.clustering <- function(X, NC = NULL, min.occupancy = 5){
- 
- X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
- return(X.clus$cluster + 1)
- 
+hdbscan_clustering <- function(X, min.occupancy = 5) {
+  X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
+  return(X.clus$cluster + 1)
 }
 
-# We start by clustering the data
-clusters_X <- hdbscan.clustering(X)
-# We test for the equality of clusters 3 and 1
-test.clusters.MC(X, U = U, Sigma = Sigma, clusters = c(3,1),
- cl = clusters_X, cl_fun = hdbscan.clustering, NC = NULL, ndraws = 500)
+# Precompute clustering
+cl_X <- hdbscan_clustering(X)
+
+# Test difference between clusters 3 and 1
+test.hdbscan <- test.clusters.MC(
+  X = X, U = U, Sigma = Sigma,
+  clusters = c(3, 1),
+  cl = cl_X,
+  cl_fun = hdbscan_clustering,
+  NC = NULL,
+  ndraws = 500
+)
+test.hdbscan$pvalue
 
 }
 \references{
-[1] L. L. Gao, J. Bien, and D. Witten. Selective inference for hierarchical clustering. Journal of the American Statistical Association, 0(0):1–11, 2022.
+Gao, L. L., Bien, J., and Witten, D. (2022).
+Selective inference for hierarchical clustering.
+\emph{Journal of the American Statistical Association}, 117(540), 2533--2547.
+
+González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2023)
+Post-clustering Inference under Dependence. 
+\emph{arXiv.2310.11822}.
 }
+\seealso{
+Other post-clustering inference functions: 
+\code{\link{test.clusters.hc}()},
+\code{\link{test.clusters.km}()}
+}
+\concept{post-clustering inference functions}

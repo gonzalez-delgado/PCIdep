@@ -1,0 +1,53 @@
+url: https://gonzalez-delgado.github.io/PCIdep/
+
+template:
+  bootstrap: 5
+  math-rendering: katex
+  bslib:
+    pkgdown-nav-height: 100px
+
+search:
+  exclude: []
+
+toc:
+  depth: 2
+
+home:
+  sidebar:
+    html: pkgdown/sidebar.html
+
+navbar:
+  structure:
+    left: [home, guide, api]
+    right: [search, github]
+  components:
+    guide:
+      text: "User guide"
+      href: user-guide.html
+    api:
+      text: "API reference"
+      href: reference/index.html
+
+reference:
+
+  - subtitle: Core methods
+    desc: Main inference procedures for hierarchical clustering, k-means clustering, and user-defined clustering algorithms.
+    contents:
+      - test.clusters.hc
+      - test.clusters.km
+      - test.clusters.MC
+
+  - subtitle: Utilities
+    desc: Helper functions for covariance diagnostics and partition checks.
+    contents:
+      - setup.model
+      - is.CS
+      - preserve.cl
+
+articles:
+  - title: User guide
+    navbar: ~
+    contents:
+      - "getting-started"
+      - "hac-km-clustering"
+      - "custom-clustering"

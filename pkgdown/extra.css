@@ -1,0 +1,248 @@
+/* Section spacing */
+.sidebar-section {
+  margin-bottom: 2rem;
+}
+
+/* Titles */
+.sidebar-section h2 {
+  font-size: 1.55rem;
+  margin-bottom: 0.6rem;
+}
+
+/* General text */
+.sidebar-text {
+  margin-bottom: 0;
+}
+
+/* Developer block */
+.developer-name {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.developer-role {
+  color: #6c757d;
+  margin-bottom: 0.7rem;
+  font-size: 0.95rem;
+}
+
+/* Icon row */
+.developer-links {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* Icons */
+.developer-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: #495057;
+  text-decoration: none;
+  transition: all 0.2s ease; 
+}
+.developer-links a[href*="gonzalez-delgado.github.io"],
+.developer-links a[href*="your-personal-website"],
+.developer-links a[href*="javiergonzalezdelgado"] {
+  color: #495057 !important;
+}
+
+.developer-links a[href*="github.com"] {
+  color: #24292e !important;
+}
+
+.developer-links a[href*="orcid.org"] {
+  color: #a6ce39 !important;
+}
+
+.developer-links a[href^="mailto:"] {
+  color: #6c757d !important;
+}
+
+.developer-links a:hover {
+  background-color: #f1f3f5;
+  transform: translateY(-1px);
+}
+.developer-name a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.developer-name a:hover {
+  text-decoration: underline;
+}
+
+/* Hover effect */
+.developer-links a:hover {
+  background-color: #f1f3f5;
+  color: #000;
+  transform: translateY(-1px);
+}
+
+/* Icon size */
+.developer-links i {
+  font-size: 1.15rem;
+}
+
+/* Links section */
+.sidebar-links {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.sidebar-links li {
+  margin-bottom: 0.3rem;
+}
+
+.sidebar-links a {
+  text-decoration: none;
+}
+
+.sidebar-links a:hover {
+  text-decoration: underline;
+}
+
+.citation-box {
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #d9dee3;
+  border-left: 5px solid #6c8ebf;
+  border-radius: 10px;
+  background: #eef5ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.icon-home { color: #495057 !important; }
+.icon-github { color: #24292e !important; }
+.icon-orcid { color: #a6ce39 !important; }
+.icon-mail { color: #6c757d !important; }
+.citation-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  color: #2c3e50;
+}
+
+.citation-box h3 {
+  font-size: 1rem;
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.citation-box p {
+  margin-bottom: 0.7rem;
+}
+
+.citation-details {
+  margin-top: 1rem;
+}
+
+.citation-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #345;
+  margin-bottom: 0.6rem;
+}
+
+.citation-details pre {
+  background: #ffffff;
+  border: 1px solid #d9dee3;
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+}
+.license-link {
+  text-decoration: none !important;
+}
+
+.license-link:hover {
+  text-decoration: none !important;
+}
+
+/* Reference page main title */
+.template-reference-index h1.page-header {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  border-bottom: none;
+}
+
+/* Remove default divider line */
+.template-reference-index .page-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Add controlled spacing */
+.template-reference-index .ref-index {
+  margin-top: 1.2rem;
+}
+
+/* Section subtitles */
+.template-reference-index h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.4rem;
+}
+
+.template-reference-index p {
+  color: #6c757d;
+  margin-bottom: 0.8rem;
+}
+
+/* Function list spacing */
+.template-reference-index .ref-index .col-md-9 {
+  padding-left: 0;
+}
+
+/* Function links */
+.template-reference-index .ref-index a {
+  font-weight: 500;
+}
+
+.template-reference-index h1.page-header {
+  font-size: 2.4rem;
+  letter-spacing: -0.3px;
+}
+
+.guide-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.guide-card {
+  display: block;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d9dee3;
+  border-radius: 12px;
+  background: #f8fafc;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.guide-card:hover {
+  background: #eef5ff;
+  border-color: #b8cbe8;
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.guide-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.4rem;
+  font-size: 1.15rem;
+}
+
+.guide-card p {
+  margin-bottom: 0;
+  color: #5f6b76;
+}

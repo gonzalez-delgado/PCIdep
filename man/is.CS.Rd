@@ -2,17 +2,36 @@
 % Please edit documentation in R/util.R
 \name{is.CS}
 \alias{is.CS}
-\title{Check whether a matrix has the Compound Symmetry (CS) structure.}
+\title{Check for compound symmetry}
 \usage{
 is.CS(U)
 }
 \arguments{
-\item{U}{A square matrix}
+\item{U}{A numeric square matrix.}
 }
 \value{
-Whether \code{U} is CS
+Logical. \code{TRUE} if \code{U} has compound symmetry structure,
+  and \code{FALSE} otherwise.
 }
 \description{
-Check whether a matrix has the Compound Symmetry (CS) structure.
+Determines whether a square matrix exhibits compound symmetry (CS), i.e.,
+whether all diagonal entries are equal and all off-diagonal entries are
+equal.
 }
-\keyword{internal}
+\examples{
+# Compound symmetry matrix
+U1 <- matrix(0.3, nrow = 4, ncol = 4)
+diag(U1) <- 1
+is.CS(U1)
+
+# Toeplitz matrix, not CS
+U2 <- toeplitz(c(1, 0.5, 0.2, 0.1))
+is.CS(U2)
+
+}
+\seealso{
+Other Utilities: 
+\code{\link{preserve.cl}()},
+\code{\link{setup.model}()}
+}
+\concept{Utilities}

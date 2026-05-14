@@ -1,0 +1,157 @@
+---
+title: "Inference after a custom clustering algorithm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Inference after a custom clustering algorithm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+`test.clusters.MC` allows to perform inference after any user-supplied clustering algorithm. This vignette
+walks through a complete example using [HDBSCAN](https://doi.org/10.1007/978-3-642-37456-2_14) (Hierarchical
+Density-Based Spatial Clustering of Applications with Noise). For a user-friendly introduction to HDBSCAN, 
+see the [hdbscan package vignette](https://cran.r-project.org/web/packages/dbscan/vignettes/hdbscan.html) or 
+the [python package documentation](https://hdbscan.readthedocs.io/en/latest/).
+
+```{r setup}
+library(PCIdep)
+library(dbscan)   
+library(ggplot2)
+library(MASS) 
+```
+---
+
+## 1. Simulate Data
+
+In this example, we simulate a dataset with three "strands" of points drawn from three multivariate Gaussian distributions.
+This type of structure can be encountered in real-world data and can be challenging for some clustering algorithms to capture.
+
+```{r simulate-data}
+set.seed(42)
+
+n <- 200   # Number of points per cluster
+Sigma <- matrix(c(2.5, -0.99, -0.99, 0.45), nrow = 2) # Covariance matrix
+
+# Three Gaussian strands
+g1 <- MASS::mvrnorm(n = n, mu = c(-5, 0), Sigma = Sigma)
+g2 <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = Sigma)
+g3 <- MASS::mvrnorm(n = n, mu = c(2, -3), Sigma = Sigma)
+
+X <- as.matrix(rbind(g1, g2, g3))
+colnames(X) <- c("x", "y")
+df <- as.data.frame(X)
+
+# Plot raw simulated data
+ggplot(df, aes(x = x, y = y)) +
+  geom_point(alpha = 0.6, size = 1.8) +
+  ggtitle("Simulated data") +
+  theme_bw()
+```
+---
+
+## 2. Construct the Cluster Function
+
+We are interested in clustering the data using HDBSCAN and then testing for differences in cluster means between two of the identified clusters. To do so, we need
+to construct a function wrapping the HDBSCAN algorithm that can be passed to [`test.clusters.MC`](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.MC.html). The wrapper must take as input the data matrix and return a vector of cluster labels.
+In the case where the custom clustering algorithm requires the number of clusters to be specified, the wrapper should also take an argument `NC` and pass it to the clustering function. 
+In the case of HDBSCAN, the number of clusters is determined automatically, so we do not need to use `NC` in our wrapper. Any other hyperparameters of the clustering algorithm should
+be exposed as arguments of the wrapper function so that they can be tuned easily. In the case of HDBSCAN, a key hyperparameter is `minPts` (the minimum cluster size), which we include in our wrapper.
+
+> [`test.clusters.MC`](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.MC.html) requires a `cl_fun` argument that follows this
+interface:
+>
+> **`cl_fun(X, NC, ...)` → integer vector of length `nrow(X)`**
+>
+> * `X` is the data matrix passed to `test.clusters.MC`.
+> * `NC` is the number of clusters (if required by the clustering algorithm). If chosen automatically, the `NC` argument can be omitted.
+> * The return value must be an integer (or integer-coercible) vector where
+>   each element is the cluster label for the corresponding observation.
+
+```{r cluster-fun}
+hdbscan_fun <- function(X, minPts = 10) {
+  res    <- dbscan::hdbscan(X, minPts = minPts) # minPts controls the minimum cluster size in HDBSCAN.
+  labels <- as.integer(res$cluster)
+  return(labels)
+}
+```
+**Note:** If the clustering algorithm requires the number of clusters `NC` explicitly, it must be passed to `cl_fun`. For example, a `kmeans` wrapper for [`test.clusters.MC`](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.MC.html) can be written as:
+
+```{r cluster-fun-kmeans}
+kmeans_fun <- function(X, NC, nstart = 10) {
+  fit <- stats::kmeans(X, centers = NC, nstart = nstart)
+  as.integer(fit$cluster)
+}
+```
+
+Let us verify that the `hdbscan_fun` works on our simulated data:
+
+```{r verify-fun}
+labels_hdbscan <- hdbscan_fun(X, minPts = 10)
+df$hdbscan_cluster <- factor(labels_hdbscan)
+
+ggplot(df, aes(x = x, y = y, colour = hdbscan_cluster)) +
+  geom_point(alpha = 0.7, size = 1.8) +
+  scale_colour_brewer(palette = "Set1", name = "Cluster\n(0 = noise)") +
+  ggtitle("HDBSCAN cluster labels") +
+  theme_bw()
+```
+---
+
+## 3. Run [`test.clusters.MC`](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.MC.html)
+
+[`test.clusters.MC`](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.MC.html) computes a Monte Carlo based $p$-value to assess whether the means of a pair of clusters
+found by the algorithm are significantly different. The function takes the same list of parameters as the [HAC](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.hc.html) and [$k$-means](https://gonzalez-delgado.github.io/PCIdep/reference/test.clusters.km.html) functions, with the 
+exception of the `cl_fun` and `ndraws` arguments:
+
+Key arguments:
+
+| Argument       | Description |
+|----------------|-------------|
+| `cl_fun`       | The wrapper function built in the previous section. |
+| `ndraws`       | Number of Monte Carlo iterations (larger → more precise $p$-values). |
+
+> Regarding **covariance estimation**, [the same considerations as in the HAC and $k$-means cases](https://gonzalez-delgado.github.io/PCIdep/articles/hac-km-clustering.html#covariance-estimation) apply. Here, we use sample splitting
+to generate an i.i.d. copy of the data for covariance estimation. 
+
+**Use of parallel computation**: The $p$-value is computed via Monte Carlo simulation: the clustering algorithm is run `ndraws` times on perturbed data, and the results are aggregated to approximate the null distribution of the test statistic.
+Since each Monte Carlo draw is independent, the computation can be parallelized straightforwardly using the [`future`](https://cran.r-project.org/package=future) package. Simply call `plan()` before running the test and choose the number of workers according to your machine's available cores.
+
+```{r run-test}
+set.seed(123)
+
+library(future) 
+plan(multisession, workers = 5) # Set parallelization plan (adjust workers according to your machine)
+
+# Compare clusters 1 and 2
+res_12 <- test.clusters.MC(X, clusters = c(1, 2), cl_fun = hdbscan_fun, NC = NULL, cl = NULL, ndraws = 500, sample_split = TRUE)
+res_12$pvalue
+
+# Compare clusters 2 and 3
+res_23 <- test.clusters.MC(X, clusters = c(2, 3), cl_fun = hdbscan_fun, NC = NULL, cl = NULL, ndraws = 500, sample_split = TRUE)
+res_23$pvalue
+
+# Compare clusters 1 and 3
+res_13 <- test.clusters.MC(X, clusters = c(1, 3), cl_fun = hdbscan_fun, NC = NULL, cl = NULL, ndraws = 500, sample_split = TRUE)
+res_13$pvalue
+```
+
+The reported $p$-values indicate that the clusters are significantly different.
+
+## Conclusion
+
+This vignette demonstrated how to use `test.clusters.MC` for inference after custom clustering algorithms. 
+The key steps are:
+
+1. **Define a wrapper function** that implements your clustering algorithm and returns integer cluster labels.
+2. **Run `test.clusters.MC`** with your wrapper function to obtain Monte Carlo-based $p$-values for pairwise cluster comparisons.
+3. **Parallelize computation** using the `future` package for faster inference on large datasets.
+

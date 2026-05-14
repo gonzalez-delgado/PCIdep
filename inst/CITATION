@@ -1,0 +1,25 @@
+citHeader("To cite PCIdep, please use:")
+
+bibentry(
+  bibtype = "Article",
+  title = "Post-clustering Inference under Dependence",
+  author = c(
+    person("Javier", "González-Delgado"),
+    person("Mathis", "Deronzier"),
+    person("Juan", "Cortés"),
+    person("Pierre", "Neuvial")
+  ),
+  journal = "arXiv",
+  year = "2023",
+  note = "Preprint",
+  url = "https://doi.org/10.48550/arXiv.2310.11822"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "PCIdep: Post-clustering inference under dependence",
+  author = person("Javier", "González-Delgado"),
+  year = "2026",
+  note = "R package version 0.1.0",
+  url = "https://github.com/gonzalez-delgado/PCIdep"
+)

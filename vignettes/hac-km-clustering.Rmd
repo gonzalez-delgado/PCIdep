@@ -1,0 +1,193 @@
+---
+title: "Inference after Hierarchical and k-means clustering"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Inference after Hierarchical and k-means clustering}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+This vignette demonstrates how to use `test.clusters.hc()` and `test.clusters.km()` functions from the PCIdep package to perform post-clustering inference on hierarchical agglomerative clustering (HAC) and $k$-means clustering results. We'll use the Palmer penguins dataset as an example. 
+
+This vignette is an adaptation of Lucy L. Gao's great [tutorial](https://lucylgao.github.io/clusterpval/HierCluster.html).
+
+## The Palmer Penguins Data
+
+The Palmer Penguins dataset contains measurements of penguin species collected from the Palmer Station in Antarctica. It includes data on body measurements (bill length, flipper length, body mass) and other characteristics for three penguin species: Adelie, Chinstrap, and Gentoo. This dataset is a useful toy example for demonstrating clustering and classification techniques.
+
+**Reference:** Horst, A. M., Hill, A. P., & Gorman, K. B. (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. Retrieved from https://github.com/allisonhorst/palmerpenguins
+
+```{r load-data}
+library(palmerpenguins)
+data(penguins)
+head(penguins)
+```
+
+We are interested in classifying individuals based on bill and flipper length, using species as the ground truth for evaluating the clustering results.
+
+```{r prepare-data}
+data_penguins <- penguins[penguins$sex == "female", c("bill_length_mm", "flipper_length_mm", "species")]
+data_penguins <- na.omit(data_penguins)
+```
+
+The scatter plot below illustrates the distribution of female penguins in the bill length vs.
+flipper length space, colored by species. It provides an initial visual assessment of how
+well these two measurements separate the three penguin species, motivating the use of
+clustering.
+
+```{r plot-data}
+library(ggplot2)
+ggplot(data_penguins, aes(x = bill_length_mm, y = flipper_length_mm, color = species)) +
+  geom_point() +
+  theme_bw() +
+  labs(title = "Female Penguins: Bill Length vs Flipper Length")+
+  labs(x = "Bill Length (mm)", y = "Flipper Length (mm)", color = "Species")
+```
+
+## Inference after Hierarchical Clustering with `test.clusters.hc()`
+
+### Performing HAC
+
+Hierarchical Agglomerative Clustering (HAC) starts with each observation as its own cluster and iteratively merges the closest clusters according to a linkage criterion. Here, we use single linkage (`single`). After building the dendrogram, we cut it at \(K=5\) to obtain five groups.
+
+```{r hac-clustering}
+# Perform hierarchical clustering
+X <- data_penguins[, c("bill_length_mm", "flipper_length_mm")] # Clustering based on bill length and flipper length
+hc_result <- hclust(dist(X), method = "ward.D") # HAC with Ward linkage
+
+# Cut the dendrogram to get cluster assignments
+num_clusters <- 5
+hc_clusters <- cutree(hc_result, k = num_clusters)
+
+# Scatter plot: color by species and use markers for HAC clusters
+ggplot(data_penguins, aes(
+  x = bill_length_mm,
+  y = flipper_length_mm,
+  color = species,
+  shape = factor(hc_clusters)
+)) +
+  geom_point(size = 2.5, alpha = 0.85) +
+  theme_bw() +
+  labs(
+    title = "Female Penguins: Species colors and HAC cluster markers",
+    x = "Bill Length (mm)",
+    y = "Flipper Length (mm)",
+    color = "Species",
+    shape = "HAC cluster"
+  )
+```
+
+The previous plot shows that some species were correctly classified into a single cluster, like Gentoo, but we also have different species classified into the same cluster (cluster 1) and two clusters containing individuals from the same species (2 and 3). 
+This motivates the use of post-clustering inference to assess whether the retrieved clusters correspond to the known ground truth.
+
+### Testing cluster differences with `test.clusters.hc()`
+
+Now we are interested in assessing whether the difference between the retrieved clusters are statistically significant. To do so, we use the `test.clusters.hc()` function. 
+
+**Note:** The `test.clusters.hc()` function does not require the clustering to be performed beforehand. It performs the hierarchical clustering automatically given a linkage method and a number of clusters, so the previous code was only illustrative.
+
+#### Covariance Estimation
+
+> The data model in `PCIdep` allows for an arbitrary covariance matrix describing dependency between features. Since the true covariance matrix $\Sigma$ is unknown, we estimate it while maintaining statistical guarantees.
+> There are two options to estimate $\Sigma$ in `PCIdep`:
+>
+> 1. **Sample splitting**: Data can be split into two sub-samples. One sub-sample is used to estimate $\Sigma$ and the other is used for clustering and inference. This approach is valid under the assumption of independence between observations. To implement this, set `sample_split = TRUE` in the `test.clusters.hc()` function. The user can also specify the number of observations to use for covariance estimation via the `nY` parameter, which defaults to half of the total sample size.
+>
+> 2. **Provide an independent sample**: If an independent sample is available, it can be provided directly to the `test.clusters.hc()` function via the `Y` parameter. Then, `Y` will be used to estimate $\Sigma$ while the full sample `X` is used for clustering and inference. When an i.i.d. sample is available, this approach is more powerful than sample splitting since it uses the full data for clustering and inference, while still providing valid covariance estimation.
+
+Here, if we assume that the dependence between flipper and bill length is the same across sexes, we can use the male penguins data to estimate $\Sigma$:
+
+```{r prepare-covariance-sample}
+Y <- penguins[penguins$sex == "male", c("bill_length_mm", "flipper_length_mm")]
+Y <- na.omit(Y) # i.i.d. sample for covariance estimation
+```
+Then, we run `test.clusters.hc()`, setting the following parameters:
+
+- `X`: data matrix used for clustering and inference.
+- `Y`: independent sample used for covariance estimation.
+- `NC`: number of clusters to retrieve from the dendrogram.
+- `clusters`: pair of cluster labels to compare (e.g., `c(1, 2)`).
+- `linkage`: HAC linkage method (here, `"ward.D"`).
+- `U`: covariance matrix of observation-level dependence. Here observations are assumed independent, so `U` is set to the identity matrix, which is the default.
+
+For details on the parameters and their usage, please refer to the `test.clusters.hc` documentation.
+
+```{r hac-testing}
+# Test the HAC clusters
+
+# Difference between clusters 4 and 2 (different species)
+hc_test_42 <- PCIdep::test.clusters.hc(X=X, Y=Y, NC = 5, clusters = c(4, 2), linkage = "ward.D")
+hc_test_42$pvalue 
+
+# Difference between clusters 2 and 3 (same species)
+hc_test_23 <- PCIdep::test.clusters.hc(X=X, Y=Y, NC = 5, clusters = c(2, 3), linkage = "ward.D")
+hc_test_23$pvalue
+```
+
+The results correspond to the expected behavior: the difference between clusters 4 and 2 is significant (as they contain different species), while the difference between clusters 2 and 3 is not significant (as they contain individuals from the same species).
+
+## k-means Clustering with `test.clusters.km()`
+
+The same post-clustering inference analysis can also be performed using the $k$-means clustering algorithm. First, we classify the data into 3 groups with $k$-means. The resulting partition is shown below.
+
+### Performing k-means on the penguins data
+
+```{r kmeans-clustering}
+# Perform k-means clustering
+km_result <- kmeans(data_penguins[, c("bill_length_mm", "flipper_length_mm")], centers = 3)
+
+# Extract cluster assignments
+km_clusters <- km_result$cluster
+
+# Scatter plot: color by species and use markers for k-means clusters
+ggplot(data_penguins, aes(
+  x = bill_length_mm,
+  y = flipper_length_mm,
+  color = species,
+  shape = factor(km_clusters)
+)) +
+  geom_point(size = 2.5, alpha = 0.85) +
+  theme_bw() +
+  labs(
+    title = "Female Penguins: Species colors and k-means cluster markers",
+    x = "Bill Length (mm)",
+    y = "Flipper Length (mm)",
+    color = "Species",
+    shape = "k-means cluster"
+  )
+```
+
+### Testing k-means clusters with `test.clusters.km()`
+
+The `test.clusters.km()` function performs post-clustering inference for $k$-means clustering results. It has similar parameters to `test.clusters.hc()`, with the exception of the clustering algorithm specific parameters. Instead of specifying a linkage method, the user can specify:
+
+- `itermax`: The maximum number of iterations allowed for the $k$-means algorithm to converge. The default is 10.
+- `tol`: The convergence threshold for the $k$-means algorithm. The default is 1e-6.
+
+The remaining parameters are the same as in `test.clusters.hc()`. To use `test.clusters.km()`, simply replace the function name and specify the desired parameters. For example, to test the difference between clusters 1 and 2, we can run:
+
+```{r kmeans-testing}
+# Test the k-means clusters
+
+km_test_12 <- PCIdep::test.clusters.km(X=X, Y=Y, NC = 3, clusters = c(1, 2)) # Using male penguins data to estimate covariance
+km_test_12$pvalue 
+```
+
+### Statistical power of `test.clusters.km()`
+
+> Post-clustering inference with $k$-means is generally _less powerful_ than with HAC or other clustering algorithms. This is due to how the $k$-means $p$-value has been defined. The $k$-means p-value in `PCIdep` is an extension of that proposed by [Chen and Witten](https://www.jmlr.org/papers/v24/22-0371.html), originally implemented for independent observations and features in the R package [`KMeansInference`](https://github.com/yiqunchen/KmeansInference). 
+The analytical tractability of this $p$-value requires conditioning on more information than in the HAC case, which comes at a price in conditional power. We refer the reader to [Chen and Witten (2023)](https://www.jmlr.org/papers/v24/22-0371.html) for a detailed discussion, or to the power analyses presented in the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+
+## Summary
+
+In this vignette, we demonstrated how to perform post-clustering inference using the `test.clusters.hc()` and `test.clusters.km()` functions from the `PCIdep` package. 
+For more details on the methods and assumptions underlying these functions, please refer to the package documentation and the [PCIdep paper](https://arxiv.org/abs/2310.11822).
