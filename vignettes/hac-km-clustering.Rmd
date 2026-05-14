@@ -116,7 +116,7 @@ Then, we run `test.clusters.hc()`, setting the following parameters:
 - `Y`: independent sample used for covariance estimation.
 - `NC`: number of clusters to retrieve from the dendrogram.
 - `clusters`: pair of cluster labels to compare (e.g., `c(1, 2)`).
-- `linkage`: HAC linkage method (here, `"single"`).
+- `linkage`: HAC linkage method (here, `"ward.D"`).
 - `U`: covariance matrix of observation-level dependence. Here observations are assumed independent, so `U` is set to the identity matrix, which is the default.
 
 For details on the parameters and their usage, please refer to the `test.clusters.hc` documentation.
