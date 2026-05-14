@@ -12,7 +12,7 @@ RoxygenNote: 7.3.3
 NeedsCompilation: no
 Packaged: 2023-01-24 12:34:47 UTC; jgonzale
 License: CeCILL-B free software license agreement
-Suggests: knitr, rmarkdown, dbscan, MASS, ggplot2
+Suggests: knitr, rmarkdown, dbscan, MASS, ggplot2, palmerpenguins
 VignetteBuilder: knitr
 URL: https://github.com/gonzalez-delgado/PCIdep,
      https://gonzalez-delgado.github.io/PCIdep/
