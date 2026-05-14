@@ -194,9 +194,9 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
         clusters_Xphi <- stats::cutree(hcl_Xphi, NC)
 
         if(preserve.cl(hcl_at_K, clusters_Xphi, clusters)) {
-          log_survives <- -(phi[j])^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
+          ls <- -(phi[j])^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
           stats::dnorm(phi[j], mean=stat_V, sd=sqrt(sum(Matrix::diag(Sigma))), log=TRUE)
-        return(log_survives)
+        return(ls)
         }
     
         return(NA)
