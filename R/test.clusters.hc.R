@@ -176,8 +176,8 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       diff_means <- as.numeric(diff_means)
       k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
       k2_constant <- (prop_k2 - 1)*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
-      orig_k1 <- Matrix::t(X[hcl_at_K == clusters[1], ])
-      orig_k2 <- Matrix::t(X[hcl_at_K == clusters[2], ])
+      orig_k1 <- Matrix::t(X[hcl_at_K == clusters[1], , drop = FALSE])
+      orig_k2 <- Matrix::t(X[hcl_at_K == clusters[2], , drop = FALSE])
       
       Xphi <- X
 
