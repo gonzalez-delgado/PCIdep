@@ -86,7 +86,7 @@ ggplot(data_penguins, aes(
   )
 ```
 
-The previous plot show that some species were correctly classified into a single cluster, like Gentoo, but we also have different species classified into the same cluster (cluster 1) and two clusters containing individuals from the same species (2 and 3). 
+The previous plot shows that some species were correctly classified into a single cluster, like Gentoo, but we also have different species classified into the same cluster (cluster 1) and two clusters containing individuals from the same species (2 and 3). 
 This motivates the use of post-clustering inference to assess whether the retrieved clusters correspond to the known ground truth.
 
 ### Testing cluster differences with `test.clusters.hc()`
