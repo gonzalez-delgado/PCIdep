@@ -116,7 +116,7 @@ Key arguments:
 
 | Argument       | Description |
 |----------------|-------------|
-| `cluster_fun`  | The wrapper function built in the previous section. |
+| `cl_fun`       | The wrapper function built in the previous section. |
 | `ndraws`       | Number of Monte Carlo iterations (larger → more precise $p$-values). |
 
 > Regarding **covariance estimation**, [the same considerations as in the HAC and $k$-means cases](https://gonzalez-delgado.github.io/PCIdep/articles/hac-km-clustering.html#covariance-estimation) apply. Here, we use sample splitting
