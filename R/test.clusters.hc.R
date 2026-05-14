@@ -171,7 +171,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       
       prop_k2 <- n2/(n1+n2)
       log_survives <- rep(NA, ndraws)
-      phi <- stats::rnorm(ndraws) + stat_V # N(stat, 1)
+      phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
       
       diff_means <- as.numeric(diff_means)
       k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
@@ -183,23 +183,22 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
 
       log_survives <- unlist(future.apply::future_lapply(X = 1:ndraws, FUN = function(j) {
 
-        if(phi[j] < 0){return(NA)}
-        
         # Compute perturbed data set for positive phi's
         Xphi <- X
         phi_minus_stat <- phi[j] - stat_V 
         Xphi[hcl_at_K == clusters[1], ] <- Matrix::t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
         Xphi[hcl_at_K == clusters[2], ] <- Matrix::t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
-        
-        # Recluster the perturbed data sets
+    
+        # Recluster the perturbed data set
         hcl_Xphi <- fastcluster::hclust(stats::dist(Xphi)^2, method = "complete")
         clusters_Xphi <- stats::cutree(hcl_Xphi, NC)
-        
-        if((sum(table(hcl_at_K, clusters_Xphi) != 0) == NC)) { # Check for same cluster
-          log_survives[j] <- -phi[j]^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
-            stats::dnorm(phi[j], mean = stat_V, sd = 1, log = TRUE)
-        }
 
+        if(preserve.cl(hcl_at_K, clusters_Xphi, clusters)) {
+          ls <- -(phi[j])^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
+          stats::dnorm(phi[j], mean=stat_V, sd=sqrt(sum(Matrix::diag(Sigma))), log=TRUE)
+        return(ls)
+        }
+    
         return(NA)
 
       }, future.seed=TRUE))
