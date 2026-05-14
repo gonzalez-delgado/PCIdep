@@ -134,8 +134,13 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   }
 
   # Check for correct clustering specification
-  if(!all(clusters %in% c(1:n_clusters_on_X))) {stop('clusters must be a vector of two integers between 1 and ', n_clusters_on_X, '.\n')}
-  if(!all(clusters%in%cl)){stop('The clusters to compare need to be among those retrieved by the algorithm: clusters is set to ', paste(clusters, collapse = ", "), ' and the retrieved clusters are ', paste(unique(cl), collapse = ", "), '.\n')}
+  cluster_labels <- unique(cl)
+  if(length(clusters) != 2) {
+    stop("'clusters' must be a vector of length 2.\n")
+  }
+  if(!all(clusters %in% cluster_labels)){
+    stop('The clusters to compare need to be among those retrieved by the algorithm: clusters is set to ', paste(clusters, collapse = ", "), ' and the retrieved clusters are ', paste(cluster_labels, collapse = ", "), '.\n')
+  }
   
   # --------------- Test for the difference of cluster means ---------------
   
