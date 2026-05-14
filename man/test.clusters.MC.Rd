@@ -107,7 +107,7 @@ Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
 # Example using HDBSCAN clustering (it chooses the number of clusters)
 # install.packages("dbscan")
 
-hdbscan_clustering <- function(X, NC = NULL, min.occupancy = 5) {
+hdbscan_clustering <- function(X, min.occupancy = 5) {
   X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
   return(X.clus$cluster + 1)
 }
