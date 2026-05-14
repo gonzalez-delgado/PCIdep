@@ -1,7 +1,7 @@
 #' @title Set up data and dependence structures for clustering and testing
 #' @family Utilities
 #' @description
-#' Prepares the data matrix \code{X} and the dependence structures \code{U} and \code{Sigma} for clustering and testing. If \code{Sigma} is not provided, it is be estimated using an i.i.d. sample \code{Y} of the same variables,
+#' Prepares the data matrix \code{X} and the dependence structures \code{U} and \code{Sigma} for clustering and testing. If \code{Sigma} is not provided, it is estimated using an i.i.d. sample \code{Y} of the same variables,
 #' with an associated dependence structure \code{UY}. Sample splitting can be used to generate \code{Y} from \code{X} when observations are independent.
 #' Checks are performed to ensure the compatibility of the dimensions of the data and dependence structures, and to verify the positive-definiteness of \code{U} and \code{Sigma}.
 #' @param X Data matrix of size \eqn{n \times p} containing the observations and variables to be clustered and tested.
