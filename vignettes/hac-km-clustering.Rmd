@@ -132,7 +132,7 @@ Now we are interested in assessing whether the difference between the retrieved 
   <strong style="color: #1f78d1;">📝 Note</strong><br/>
   The <code>test.clusters.hc()</code> function does not require the clustering to be performed beforehand. It performs the hierarchical clustering automatically given
   a linkage method and a number of clusters, so the previous code was only illustrative. However, if the user prefers to perform clustering beforehand, they can
-  provide a `stats::hclust()` or `fastcluster::hclust() object via the <code>hcl</code> parameter. In this case, the function will not perform clustering and will directly
+  provide a `stats::hclust()` or `fastcluster::hclust()` object via the <code>hcl</code> parameter. In this case, the function will not perform clustering and will directly
   test the provided clusters. This can be useful when multiple cluster pairs from the same partition or dendrogram are to be tested.
 </div>
 
