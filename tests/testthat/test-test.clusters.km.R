@@ -229,11 +229,17 @@ test_that("test.clusters.km warns and ignores km_at_cl when sample_split = TRUE"
   )
   expect_warning(
     suppressMessages(
-      test.clusters.km(
-        X = X, U = NULL, Sigma = NULL,
-        NC = 3, clusters = c(1, 3),
-        km_at_cl = km_obj,
-        sample_split = TRUE
+      withCallingHandlers(
+        test.clusters.km(
+          X = X, U = NULL, Sigma = NULL,
+          NC = 3, clusters = c(1, 3),
+          km_at_cl = km_obj,
+          sample_split = TRUE
+        ),
+        warning = function(w) {
+          if (grepl("Consider setting", conditionMessage(w)))
+            invokeRestart("muffleWarning")
+        }
       )
     ),
     regexp = "ignored when sample_split"

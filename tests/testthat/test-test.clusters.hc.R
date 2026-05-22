@@ -245,11 +245,17 @@ test_that("test.clusters.hc warns and ignores hcl when sample_split = TRUE", {
   hcl_obj <- fastcluster::hclust(stats::dist(X)^2, method = "average")
   expect_warning(
     suppressMessages(
-      test.clusters.hc(
-        X = X, U = NULL, Sigma = NULL,
-        NC = 3, clusters = c(1, 3),
-        hcl = hcl_obj,
-        sample_split = TRUE
+      withCallingHandlers(
+        test.clusters.hc(
+          X = X, U = NULL, Sigma = NULL,
+          NC = 3, clusters = c(1, 3),
+          hcl = hcl_obj,
+          sample_split = TRUE
+        ),
+        warning = function(w) {
+          if (grepl("Consider setting", conditionMessage(w)))
+            invokeRestart("muffleWarning")
+        }
       )
     ),
     regexp = "ignored when sample_split"
