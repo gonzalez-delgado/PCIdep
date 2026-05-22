@@ -45,13 +45,13 @@ Checks are performed to ensure the compatibility of the dimensions of the data a
 }
 \examples{
 # Example with independent observations and known Sigma
-X <- matrix(rnorm(100 * 5), nrow = 10, ncol = 5)
+X <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 Sigma <- diag(5)
 setup_result <- setup.model(X = X, Sigma = Sigma)
 print(setup_result)
 # Example with dependent observations and unknown Sigma, using sample splitting
-X <- matrix(rnorm(100 * 5), nrow = 10, ncol = 5)
-U <- matrix(0.3, nrow = 10, ncol = 10)
+X <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
+U <- matrix(0.3, nrow = 100, ncol = 100)
 diag(U) <- 1
 setup_result <- setup.model(X = X, U = U, sample_split = TRUE)
 print(setup_result)
