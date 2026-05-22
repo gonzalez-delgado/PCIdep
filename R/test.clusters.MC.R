@@ -28,7 +28,9 @@
 #' @param ndraws Integer. Number of Monte Carlo samples used to approximate the p-value.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
 #' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
-#' 
+#' @param return_Sigma Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.
+#' @param return_X_clus Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.
+#'
 #' @return
 #' A named list with the following components:
 #' \describe{
@@ -38,6 +40,9 @@
 #'   \item{stderr}{Monte Carlo standard error of the estimated p-value.}
 #'   \item{clusters}{An integer vector of length \eqn{n} giving the cluster
 #'   membership of each observation.}
+#'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
+#'   by the user or estimated from \code{Y}.}
+#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
 #' }
 #'
 #' @details
@@ -103,9 +108,18 @@
 #'
 #' @export
 
-test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL){
+test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
   
   # --------------- Initial checks and pre-processing ---------------
+
+  # Check consistency between sample_split and return_X_clus
+  if(!sample_split & return_X_clus){
+    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
+    return_X_clus <- FALSE
+  }
+  if(sample_split & !return_X_clus){
+    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
+  }
 
   # Set up data and dependency structures, estimate Sigma if needed
   setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY)
@@ -214,7 +228,11 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   props <- exp(log_survives_shift)/sum(exp(log_survives_shift))
   pv <- sum(props[phi >= stat_V])
   var_pv <- (1 - pv)^2*sum(props[phi >= stat_V]^2) + pv^2*sum(props[phi < stat_V]^2)
-      
-  return(list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv),  clusters=cl))
+  
+  return_list <- list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv), clusters=cl)
+  if(return_Sigma){return_list$Sigma <- Sigma}
+  if(return_X_clus & sample_split){return_list$X_clus <- X}
+
+  return(return_list)
       
 }

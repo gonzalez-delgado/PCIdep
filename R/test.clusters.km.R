@@ -22,9 +22,17 @@
 #' @param clusters Integer vector of length 2 specifying the pair of clusters to compare. Entries must belong to \code{1:NC}.
 #' @param itermax Integer. Maximum number of iterations for the k-means algorithm, passed to \code{KmeansInference::kmeans_inference}.
 #' @param tol Numeric tolerance parameter controlling convergence of the k-means algorithm, passed as \code{tol_eps}.
+#' @param km_at_cl An optional precomputed output of \code{KmeansInference::kmeans_inference()}.
+#'   When supplied, the clustering and truncation-set computation steps are skipped and the
+#'   precomputed partition and interval are used directly.  This is useful when testing the same
+#'   cluster pair under several covariance assumptions, as it avoids redundant calls to the
+#'   inference algorithm.  Ignored (with a warning) when \code{sample_split = TRUE}, because
+#'   sample splitting changes \code{X} after the clustering would have been computed.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
 #' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
-#' 
+#' @param return_Sigma Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.
+#' @param return_X_clus Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.
+#'
 #' @details
 #' Selective type I error control is guaranteed when the row covariance matrix
 #' \eqn{\mathbf{U}} has a compound symmetry (CS) structure, i.e.,
@@ -53,6 +61,9 @@
 #'   membership of each observation returned by the k-means algorithm.}
 #'   \item{Sigma}{The column covariance matrix used in the test, either provided
 #'   by the user or estimated from \code{Y}.}
+#'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
+#'   by the user or estimated from \code{Y}.}
+#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
 #' }
 #'
 #' @examples
@@ -96,13 +107,35 @@
 #'
 #' @export
 
-test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6, sample_split = FALSE, nY = NULL){
+test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6, km_at_cl = NULL, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
   
   # --------------- Initial checks and pre-processing ---------------
+
+  # Validate precomputed km_at_cl if provided
+  if(!is.null(km_at_cl)){
+    if(!is.list(km_at_cl) || !all(c("final_cluster", "final_interval", "test_stat")%in% names(km_at_cl))) {
+      stop("'km_at_cl' must be the output of 'KmeansInference::kmeans_inference()'.")
+    }
+  }
+
+  # Discard precomputed km_at_cl when sample splitting, since X changes after the split
+  if (!is.null(km_at_cl) && sample_split) {
+    warning("'km_at_cl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
+    km_at_cl <- NULL
+  }
 
   # Check for correct clustering specification
   if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
   
+  # Check consistency between sample_split and return_X_clus
+  if(!sample_split & return_X_clus){
+    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
+    return_X_clus <- FALSE
+  }
+  if(sample_split & !return_X_clus){
+    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
+  }
+
   # Set up data and dependency structures, estimate Sigma if needed
   setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY)
   X <- setup_model$X
@@ -111,16 +144,18 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
  
   # --------------- Cluster data ---------------
   
-  # K-means clustering from KmeansInference package 
-  test_kmeans <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = NULL, sig = 1, tol_eps = tol, iter.max = itermax)
-  
+  # K-means clustering from KmeansInference package
+  if(is.null(km_at_cl)){
+    km_at_cl <- KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = NULL, sig = 1, tol_eps = tol, iter.max = itermax)
+  }
+
   # --------------- Test for the difference of cluster means ---------------
-  
+
   # Select individuals from each cluster
-  km_at_cl <- as.vector(test_kmeans$final_cluster) # Clustering partition
-  n1 <- sum(km_at_cl == clusters[1])
-  n2 <- sum(km_at_cl == clusters[2])
-  nu <- Matrix::Matrix((km_at_cl == clusters[1])/n1 - (km_at_cl == clusters[2])/n2)
+  km_labels <- as.vector(km_at_cl$final_cluster) # Clustering partition
+  n1 <- sum(km_labels == clusters[1])
+  n2 <- sum(km_labels == clusters[2])
+  nu <- Matrix::Matrix((km_labels == clusters[1])/n1 - (km_labels == clusters[2])/n2)
   norm2_nu <- 1/n1 + 1/n2
   
   # Difference of cluster means 
@@ -133,8 +168,8 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv,diff_means))) # Test statistic (norm_V{diff_means})
   
   # Computation of the truncation set for the 2-norm in Chen et al. 2022
-  S2 <- test_kmeans$final_interval # Truncation set for the 2-norm
-  stat_2 <- test_kmeans$test_stat # Test statistic for the 2-norm (2-norm of diff_means)
+  S2 <- km_at_cl$final_interval # Truncation set for the 2-norm
+  stat_2 <- km_at_cl$test_stat # Test statistic for the 2-norm (2-norm of diff_means)
   SV <- S2*as.numeric(exp(log(stat_V)-log(stat_2))) # Truncation set for norm_V.
   
   # Computation of the p-value using the chisq distribution
@@ -142,6 +177,10 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   I2 <- suppressWarnings(intervals::interval_intersection(I1, SV^2))
   pv <- clusterpval::TChisqRatioApprox(dim(Sigma)[1], I2, SV^2)
   
-  return(list(pvalue = pv, stat = stat_V, km = km_at_cl, Sigma = Sigma))}
+  return_list <- list(pvalue = pv, stat = stat_V, km = km_labels)
+  if(return_Sigma){return_list$Sigma <- Sigma}
+  if(return_X_clus & sample_split){return_list$X_clus <- X}
+  return(return_list)}
+      
 
 

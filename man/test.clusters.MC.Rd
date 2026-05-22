@@ -17,7 +17,9 @@ test.clusters.MC(
   cl = NULL,
   ndraws = 2000,
   sample_split = FALSE,
-  nY = NULL
+  nY = NULL,
+  return_Sigma = FALSE,
+  return_X_clus = FALSE
 )
 }
 \arguments{
@@ -40,8 +42,7 @@ rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity
 
 \item{clusters}{Integer vector of length 2 specifying the pair of clusters to compare.}
 
-\item{cl_fun}{A function implementing the clustering procedure. It must take as input the data matrix \code{X} and the number of clusters \code{NC}
-(if required), and return an integer vector of length \eqn{n} containing cluster assignments.}
+\item{cl_fun}{A function implementing the clustering procedure. It must take as input the data matrix \code{X} and return an integer vector of length \eqn{n} containing cluster assignments. If required by the clustering algorithm, \code{cl_fun} should also take an argument \code{NC} specifying the number of clusters to be used.}
 
 \item{NC}{Integer scalar specifying the number of clusters to be used by \code{cl_fun}. If the clustering algorithm determines the number of
 clusters automatically, this argument should be set to \code{NULL}.}
@@ -53,6 +54,10 @@ clusters automatically, this argument should be set to \code{NULL}.}
 \item{sample_split}{Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.}
 
 \item{nY}{Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.}
+
+\item{return_Sigma}{Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.}
+
+\item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
 }
 \value{
 A named list with the following components:
@@ -63,6 +68,9 @@ A named list with the following components:
   \item{stderr}{Monte Carlo standard error of the estimated p-value.}
   \item{clusters}{An integer vector of length \eqn{n} giving the cluster
   membership of each observation.}
+  \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
+  by the user or estimated from \code{Y}.}
+  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
 }
 }
 \description{
@@ -109,7 +117,7 @@ Y <- matrixNormal::rmatnorm(s = 1, M, U, Sigma)
 
 hdbscan_clustering <- function(X, min.occupancy = 5) {
   X.clus <- dbscan::hdbscan(X, minPts = min.occupancy)
-  return(X.clus$cluster + 1)
+  return(X.clus$cluster + 1) 
 }
 
 # Precompute clustering

@@ -89,22 +89,48 @@ ggplot(data_penguins, aes(
 The previous plot shows that some species were correctly classified into a single cluster, like Gentoo, but we also have different species classified into the same cluster (cluster 1) and two clusters containing individuals from the same species (2 and 3). 
 This motivates the use of post-clustering inference to assess whether the retrieved clusters correspond to the known ground truth.
 
+### Covariance estimation is needed for post-clustering inference
+
+The data model in `PCIdep` allows for an arbitrary covariance matrix describing dependency between features. Since the true covariance matrix $\boldsymbol{\Sigma}$ is unknown, we estimate it while maintaining statistical guarantees.
+There are two options to estimate $\boldsymbol{\Sigma}$ in `PCIdep`, detailed below. These hold for all clustering algorithms implemented in the package, including HAC (`test.clusters.hc()`), $k$-means (`test.clusters.km()`) and any custom clustering algorithm (`test.clusters.MC()`).
+
+#### 1. Sample splitting
+
+> Data can be split into two sub-samples. One sub-sample is used to estimate $\boldsymbol{\Sigma}$ and the other is used for clustering and inference.
+> <u>This approach is valid under the assumption of independence between observations.</u> To implement this, set `sample_split = TRUE` in the
+> testing function. The user can also specify the number of observations to use for covariance estimation via the `nY` parameter,
+> which defaults to half of the total sample size.
+
+<div style="border-left: 4px solid #e6a817; background-color: #fdf6e3; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #b8860b;">&#9888; Important</strong><br/>
+  If sample splitting is performed internally (setting <code>sample_split = TRUE</code>), clustering (and testing) will be performed on a random subset of <code>X</code>. Consequently, any further analysis or representation
+  of the retrieved clusters should be performed on such data subset. To obtain the data subset used for clustering and inference, set <code>return_X_clus = TRUE</code> when calling the function. This will include
+  the data matrix used for clustering in the returned list under the name <code>X_clus</code>. If preferred, the user can also perform sample splitting prior to calling the function, and provide the covariance estimation 
+  sample via the <code>Y</code> parameter (see next section). In this case, clustering and inference will be performed on the full data matrix <code>X</code>.
+</div>
+
+#### 2. Provide an independent sample
+
+> If an independent sample is available, it can be provided directly to the testing function via the `Y` parameter. 
+> Then, `Y` will be used to estimate $\boldsymbol{\Sigma}$ while the full sample `X` is used for clustering and inference. When an i.i.d. 
+> sample is available, this approach is more powerful than sample splitting since it uses the full data for clustering and inference,
+> while still providing valid covariance estimation.
+
+<div style="border-left: 4px solid #27ae60; background-color: #eafaf1; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #27ae60;">💡 Dependent observations</strong><br/>
+  This functionality allows introducing an i.i.d. sample for estimation when observations are not independent, that is, whose covariance structure is encoded via a known matrix $\mathbf{U}\neq\mathbb{I}_n$.
+  A matrix $\mathbf{U}$ of size $n_Y \times n_Y$, where $n_Y$ is the number of observations in the i.i.d. copy, must be provided via the <code>UY</code> parameter. Alternatively, its inverse (precision matrix)
+  can be supplied via the <code>precUY</code> parameter. If neither of `UY` or `precUY` is provided, the function will assume independence between observations in the i.i.d. copy and set `UY` to the identity matrix.
+</div>
+
+
 ### Testing cluster differences with `test.clusters.hc()`
 
 Now we are interested in assessing whether the difference between the retrieved clusters are statistically significant. To do so, we use the `test.clusters.hc()` function. 
 
 **Note:** The `test.clusters.hc()` function does not require the clustering to be performed beforehand. It performs the hierarchical clustering automatically given a linkage method and a number of clusters, so the previous code was only illustrative.
 
-#### Covariance Estimation
-
-> The data model in `PCIdep` allows for an arbitrary covariance matrix describing dependency between features. Since the true covariance matrix $\Sigma$ is unknown, we estimate it while maintaining statistical guarantees.
-> There are two options to estimate $\Sigma$ in `PCIdep`:
->
-> 1. **Sample splitting**: Data can be split into two sub-samples. One sub-sample is used to estimate $\Sigma$ and the other is used for clustering and inference. This approach is valid under the assumption of independence between observations. To implement this, set `sample_split = TRUE` in the `test.clusters.hc()` function. The user can also specify the number of observations to use for covariance estimation via the `nY` parameter, which defaults to half of the total sample size.
->
-> 2. **Provide an independent sample**: If an independent sample is available, it can be provided directly to the `test.clusters.hc()` function via the `Y` parameter. Then, `Y` will be used to estimate $\Sigma$ while the full sample `X` is used for clustering and inference. When an i.i.d. sample is available, this approach is more powerful than sample splitting since it uses the full data for clustering and inference, while still providing valid covariance estimation.
-
-Here, if we assume that the dependence between flipper and bill length is the same across sexes, we can use the male penguins data to estimate $\Sigma$:
+Here, if we assume that the dependence between flipper and bill length is the same across sexes, we can use the male penguins data to estimate $\boldsymbol{\Sigma}$:
 
 ```{r prepare-covariance-sample}
 Y <- penguins[penguins$sex == "male", c("bill_length_mm", "flipper_length_mm")]
@@ -182,10 +208,11 @@ km_test_12 <- PCIdep::test.clusters.km(X=X, Y=Y, NC = 3, clusters = c(1, 2)) # U
 km_test_12$pvalue 
 ```
 
-### Statistical power of `test.clusters.km()`
-
-> Post-clustering inference with $k$-means is generally _less powerful_ than with HAC or other clustering algorithms. This is due to how the $k$-means $p$-value has been defined. The $k$-means p-value in `PCIdep` is an extension of that proposed by [Chen and Witten](https://www.jmlr.org/papers/v24/22-0371.html), originally implemented for independent observations and features in the R package [`KMeansInference`](https://github.com/yiqunchen/KmeansInference). 
-The analytical tractability of this $p$-value requires conditioning on more information than in the HAC case, which comes at a price in conditional power. We refer the reader to [Chen and Witten (2023)](https://www.jmlr.org/papers/v24/22-0371.html) for a detailed discussion, or to the power analyses presented in the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+<div style="border-left: 4px solid #27ae60; background-color: #eafaf1; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #27ae60;">💡 Statistical power of `test.clusters.km()`</strong><br/>
+  Post-clustering inference with $k$-means is generally _less powerful_ than with HAC or other clustering algorithms. This is due to how the $k$-means $p$-value has been defined. The $k$-means p-value in `PCIdep` is an extension of that proposed by [Chen and Witten](https://www.jmlr.org/papers/v24/22-0371.html), originally implemented for independent observations and features in the R package [`KMeansInference`](https://github.com/yiqunchen/KmeansInference). 
+  The analytical tractability of this $p$-value requires conditioning on more information than in the HAC case, which comes at a price in conditional power. We refer the reader to [Chen and Witten (2023)](https://www.jmlr.org/papers/v24/22-0371.html) for a detailed discussion, or to the power analyses presented in the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+</div>
 
 ## Summary
 
