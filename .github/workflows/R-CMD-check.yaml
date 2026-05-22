@@ -6,7 +6,8 @@
 # examples, vignettes).
 #
 # Dependencies are resolved from DESCRIPTION (including the GitHub remotes
-# for clusterpval and KmeansInference) by r-lib/actions/setup-r-dependencies.
+# for clusterpval and KmeansInference) by 'remotes', which authenticates via
+# GITHUB_PAT and avoids pak's lockfile_create() GitHub API calls.
 
 on:
   push:
@@ -52,11 +53,17 @@ jobs:
           use-public-rspm: true
 
       # Installs all packages listed in Imports, Suggests, and Remotes.
-      # The 'check' extra-packages set pulls in rcmdcheck itself.
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::rcmdcheck
-          needs: check
+      # We use 'remotes' instead of r-lib/actions/setup-r-dependencies (pak)
+      # because pak's lockfile_create() calls the GitHub REST API directly and
+      # can fail with an HTML rate-limit page when resolving GitHub remotes.
+      # 'remotes' authenticates via GITHUB_PAT and is more resilient.
+      - name: Install dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages(c("remotes", "rcmdcheck"))
+          remotes::install_github("yiqunchen/KmeansInference", upgrade = "never")
+          remotes::install_github("lucylgao/clusterpval", upgrade = "never")
+          remotes::install_deps(dependencies = TRUE)
 
       - name: Check package
         shell: Rscript {0}
