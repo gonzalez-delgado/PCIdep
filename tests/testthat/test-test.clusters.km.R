@@ -212,6 +212,56 @@ test_that("test.clusters.km stops when km_at_cl is not a kmeans_inference result
   )
 })
 
+# km_at_cl built on a different number of observations than nrow(X) must be
+# rejected before any computation is attempted.
+test_that("test.clusters.km stops when km_at_cl has wrong number of observations", {
+  d <- make_km_data()
+  set.seed(1)
+  X_other <- rbind(
+    matrix(rnorm(5 * d$p, mean = -4), nrow = 5),
+    matrix(rnorm(5 * d$p, mean =  4), nrow = 5)
+  )
+  km_wrong <- KmeansInference::kmeans_inference(
+    as.matrix(X_other), k = 2, cluster_1 = 1, cluster_2 = 2,
+    verbose = FALSE, seed = NULL, sig = 1, tol_eps = 1e-6, iter.max = 50
+  )
+  expect_error(
+    suppressMessages(run_km(d, clusters = c(1, 3), km_at_cl = km_wrong)),
+    regexp = "rows"
+  )
+})
+
+# km_at_cl with a number of distinct clusters different from NC must be caught.
+test_that("test.clusters.km stops when km_at_cl has wrong number of clusters", {
+  d <- make_km_data()
+  set.seed(2)
+  km_two <- KmeansInference::kmeans_inference(
+    as.matrix(d$X), k = 2, cluster_1 = 1, cluster_2 = 2,
+    verbose = FALSE, seed = NULL, sig = 1, tol_eps = 1e-6, iter.max = 50
+  )
+  expect_error(
+    suppressMessages(run_km(d, clusters = c(1, 3), km_at_cl = km_two)),
+    regexp = "NC"
+  )
+})
+
+# If 'clusters' contains a label not present in km_at_cl$final_cluster the
+# function must stop, since the requested comparison is undefined.
+test_that("test.clusters.km stops when clusters label is absent from km_at_cl", {
+  d <- make_km_data()
+  set.seed(42)
+  km_obj <- KmeansInference::kmeans_inference(
+    as.matrix(d$X), k = 3, cluster_1 = 1, cluster_2 = 2,
+    verbose = FALSE, seed = NULL, sig = 1, tol_eps = 1e-6, iter.max = 50
+  )
+  # Force a label that cannot exist in a 3-cluster solution
+  km_obj$final_cluster[km_obj$final_cluster == 3] <- 99L
+  expect_error(
+    suppressMessages(run_km(d, clusters = c(1, 3), km_at_cl = km_obj)),
+    regexp = "clusters"
+  )
+})
+
 # When sample_split = TRUE the X matrix is modified after the split, so a
 # precomputed km_at_cl would refer to the wrong data.  The function must warn
 # and recompute the clustering on the subsample.

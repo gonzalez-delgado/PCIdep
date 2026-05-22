@@ -34,6 +34,7 @@
 #'   When supplied, the clustering step is skipped and the linkage criterion is inferred from \code{hcl$method},
 #'   overriding the \code{linkage} argument. Passing a precomputed \code{hcl} is useful when testing several
 #'   cluster pairs from the same clustering, as it avoids recomputing the dendrogram each time.
+#'   The number of leaves in \code{hcl} must equal \code{nrow(X)}; an error is raised otherwise.
 #'   Ignored (with a warning) when \code{sample_split = TRUE}, because sample splitting changes \code{X}
 #'   after the clustering would have been computed.
 #' @param ndraws Integer. Number of Monte Carlo samples used to approximate the p-value when \code{linkage = "complete"}. Ignored otherwise.
@@ -145,8 +146,14 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     if(!linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
       stop('linkage must be one in "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".')}
   }else{
-    if(!inherits(hcl, "hclust")){
+    if (!inherits(hcl, "hclust")) {
       stop("'hcl' must be an object of class 'hclust' as returned by fastcluster::hclust() or stats::hclust().")}
+    if (length(hcl$order) != nrow(X)) {
+      stop(paste0(
+        "'hcl' was built on ", length(hcl$order), " observations but X has ", nrow(X),
+        " rows. 'hcl' must be computed on the same data matrix X."
+      ))
+    }
     inferred_linkage <- hcl$method
     if(!inferred_linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
       stop(paste0('The linkage method stored in the provided hcl object ("', inferred_linkage, '") is not supported. Must be one of "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".'))}

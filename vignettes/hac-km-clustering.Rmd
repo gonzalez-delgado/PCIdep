@@ -128,7 +128,13 @@ There are two options to estimate $\boldsymbol{\Sigma}$ in `PCIdep`, detailed be
 
 Now we are interested in assessing whether the difference between the retrieved clusters are statistically significant. To do so, we use the `test.clusters.hc()` function. 
 
-**Note:** The `test.clusters.hc()` function does not require the clustering to be performed beforehand. It performs the hierarchical clustering automatically given a linkage method and a number of clusters, so the previous code was only illustrative.
+<div style="border-left: 4px solid #1f78d1; background-color: #eaf3ff; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #1f78d1;">📝 Note</strong><br/>
+  The <code>test.clusters.hc()</code> function does not require the clustering to be performed beforehand. It performs the hierarchical clustering automatically given
+  a linkage method and a number of clusters, so the previous code was only illustrative. However, if the user prefers to perform clustering beforehand, they can
+  provide a `stats::hclust()` or `fastcluster::hclust() object via the <code>hcl</code> parameter. In this case, the function will not perform clustering and will directly
+  test the provided clusters. This can be useful when multiple cluster pairs from the same partition or dendrogram are to be tested.
+</div>
 
 Here, if we assume that the dependence between flipper and bill length is the same across sexes, we can use the male penguins data to estimate $\boldsymbol{\Sigma}$:
 
@@ -196,6 +202,12 @@ ggplot(data_penguins, aes(
 
 The `test.clusters.km()` function performs post-clustering inference for $k$-means clustering results. It has similar parameters to `test.clusters.hc()`, with the exception of the clustering algorithm specific parameters. Instead of specifying a linkage method, the user can specify:
 
+<div style="border-left: 4px solid #1f78d1; background-color: #eaf3ff; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #1f78d1;">📝 Note</strong><br/>
+  For <code>test.clusters.km()</code>, the user can also provide an <code>aKmeansInference::kmeans_inference()</code> object via the <code>km_at_cl</code> parameter.
+  In this case, the function will not perform <em>k</em>-means again and will directly test the provided clustering result.
+</div>
+
 - `itermax`: The maximum number of iterations allowed for the $k$-means algorithm to converge. The default is 10.
 - `tol`: The convergence threshold for the $k$-means algorithm. The default is 1e-6.
 
@@ -207,6 +219,9 @@ The remaining parameters are the same as in `test.clusters.hc()`. To use `test.c
 km_test_12 <- PCIdep::test.clusters.km(X=X, Y=Y, NC = 3, clusters = c(1, 2)) # Using male penguins data to estimate covariance
 km_test_12$pvalue 
 ```
+
+
+
 
 <div style="border-left: 4px solid #27ae60; background-color: #eafaf1; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
   <strong style="color: #27ae60;">💡 Statistical power of `test.clusters.km()`</strong><br/>

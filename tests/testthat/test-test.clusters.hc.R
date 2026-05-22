@@ -232,6 +232,19 @@ test_that("test.clusters.hc stops when hcl is not an hclust object", {
   )
 })
 
+# An hcl object built on a different number of observations than nrow(X) is
+# incompatible and must be caught with a clear error.
+test_that("test.clusters.hc stops when hcl has wrong number of observations", {
+  d <- make_hc_data()
+  # Build hcl on a dataset with a different number of rows
+  X_other <- matrix(rnorm(10 * d$p), nrow = 10)
+  hcl_wrong <- fastcluster::hclust(stats::dist(X_other)^2, method = "average")
+  expect_error(
+    suppressMessages(run_hc(d, hcl = hcl_wrong)),
+    regexp = "nrow\\(X\\)|rows"
+  )
+})
+
 # When sample_split = TRUE, X changes after splitting so a precomputed hcl
 # would be stale.  The function must warn and recompute the clustering.
 test_that("test.clusters.hc warns and ignores hcl when sample_split = TRUE", {

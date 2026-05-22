@@ -26,7 +26,10 @@
 #'   When supplied, the clustering and truncation-set computation steps are skipped and the
 #'   precomputed partition and interval are used directly.  This is useful when testing the same
 #'   cluster pair under several covariance assumptions, as it avoids redundant calls to the
-#'   inference algorithm.  Ignored (with a warning) when \code{sample_split = TRUE}, because
+#'   inference algorithm.  The object must be compatible with \code{X} and \code{NC}: the number
+#'   of cluster labels must equal \code{nrow(X)}, the number of distinct clusters must equal
+#'   \code{NC}, and all labels in \code{clusters} must be present in the partition.
+#'   Ignored (with a warning) when \code{sample_split = TRUE}, because
 #'   sample splitting changes \code{X} after the clustering would have been computed.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
 #' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
@@ -112,9 +115,27 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # --------------- Initial checks and pre-processing ---------------
 
   # Validate precomputed km_at_cl if provided
-  if(!is.null(km_at_cl)){
-    if(!is.list(km_at_cl) || !all(c("final_cluster", "final_interval", "test_stat")%in% names(km_at_cl))) {
+  if (!is.null(km_at_cl)) {
+    if (!is.list(km_at_cl) || !all(c("final_cluster", "final_interval", "test_stat") %in% names(km_at_cl))) {
       stop("'km_at_cl' must be the output of 'KmeansInference::kmeans_inference()'.")
+    }
+    if (length(km_at_cl$final_cluster) != nrow(X)) {
+      stop(paste0(
+        "'km_at_cl' contains ", length(km_at_cl$final_cluster), " cluster labels but X has ", nrow(X),
+        " rows. 'km_at_cl' must be computed on the same data matrix X."
+      ))
+    }
+    km_unique <- sort(unique(as.vector(km_at_cl$final_cluster)))
+    if (length(km_unique) != NC) {
+      stop(paste0(
+        "'km_at_cl' contains ", length(km_unique), " distinct cluster(s) but NC = ", NC, "."
+      ))
+    }
+    if (!all(clusters %in% km_unique)) {
+      stop(paste0(
+        "The cluster labels in 'clusters' (", paste(clusters, collapse = ", "),
+        ") are not all present in 'km_at_cl$final_cluster'."
+      ))
     }
   }
 
