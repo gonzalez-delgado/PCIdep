@@ -113,7 +113,8 @@
 #'
 #' # Hierarchical clustering with complete linkage, estimated Sigma, and parallelization
 #' library(future)
-#' plan(multisession, workers = 4) # Set parallelization plan (adjust workers according to your machine)
+#' # Set parallelization plan (adjust workers according to your machine):
+#' plan(multisession, workers = 4)
 #' test.hc <- test.clusters.hc(
 #'   X = X, U = U, Sigma = NULL, Y = Y,
 #'   NC = 3, clusters = sample(1:3, 2),

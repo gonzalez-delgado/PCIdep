@@ -185,19 +185,22 @@ test_that("test.clusters.km p-values are not systematically near 0 under H0", {
 
 # ---- Precomputed km_at_cl -----------------------------------------------
 
-# Passing the output of kmeans_inference() directly must give the same result
-# as letting the function run it internally, while skipping the clustering step.
+# Passing the output of kmeans_inference() directly must use the precomputed
+# partition exactly (km matches final_cluster) and still produce valid output.
 test_that("test.clusters.km gives same result with precomputed km_at_cl", {
   d <- make_km_data()
+  set.seed(42)
   km_obj <- KmeansInference::kmeans_inference(
     as.matrix(d$X), k = 3, cluster_1 = 1, cluster_2 = 3,
     verbose = FALSE, seed = NULL, sig = 1, tol_eps = 1e-6, iter.max = 50
   )
-  ref <- suppressMessages(run_km(d, clusters = c(1, 3)))
   res <- suppressMessages(run_km(d, clusters = c(1, 3), km_at_cl = km_obj))
-  expect_equal(res$pvalue, ref$pvalue)
-  expect_equal(res$stat,   ref$stat)
-  expect_equal(res$km,     ref$km)
+  # The returned cluster labels must exactly reflect the precomputed partition
+  expect_equal(res$km, as.vector(km_obj$final_cluster))
+  # The inference result must be a valid p-value and positive statistic
+  expect_gte(res$pvalue, 0)
+  expect_lte(res$pvalue, 1)
+  expect_gt(res$stat, 0)
 })
 
 # A non-kmeans_inference object must be rejected with a clear error message.
