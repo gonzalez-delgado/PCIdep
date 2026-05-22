@@ -4,13 +4,14 @@ Title: Post-clustering inference under dependence
 Version: 0.1.0
 Description: PCIdep extends the framework introduced in the R packages clusterpval and KMeansInference for arbitrary dependence structures between observations and features.
 Encoding: UTF-8
-Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, RColorBrewer, graphics, future, future.apply
+Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, future.apply
 Remotes: lucylgao/clusterpval, yiqunchen/KmeansInference
 RoxygenNote: 7.3.3
 NeedsCompilation: no
 Packaged: 2023-01-24 12:34:47 UTC; jgonzale
-License: CeCILL-B
-Suggests: knitr, rmarkdown, dbscan, MASS, ggplot2, palmerpenguins
+License: CeCILL-B | file LICENSE
+Suggests: knitr, rmarkdown, dbscan, MASS, ggplot2, palmerpenguins, testthat (>= 3.0.0), future
+Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/gonzalez-delgado/PCIdep,
      https://gonzalez-delgado.github.io/PCIdep/

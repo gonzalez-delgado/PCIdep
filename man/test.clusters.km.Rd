@@ -15,8 +15,11 @@ test.clusters.km(
   clusters,
   itermax = 10,
   tol = 1e-06,
+  km_at_cl = NULL,
   sample_split = FALSE,
-  nY = NULL
+  nY = NULL,
+  return_Sigma = FALSE,
+  return_X_clus = FALSE
 )
 }
 \arguments{
@@ -45,9 +48,20 @@ rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity
 
 \item{tol}{Numeric tolerance parameter controlling convergence of the k-means algorithm, passed as \code{tol_eps}.}
 
+\item{km_at_cl}{An optional precomputed output of \code{KmeansInference::kmeans_inference()}.
+When supplied, the clustering and truncation-set computation steps are skipped and the
+precomputed partition and interval are used directly.  This is useful when testing the same
+cluster pair under several covariance assumptions, as it avoids redundant calls to the
+inference algorithm.  Ignored (with a warning) when \code{sample_split = TRUE}, because
+sample splitting changes \code{X} after the clustering would have been computed.}
+
 \item{sample_split}{Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.}
 
 \item{nY}{Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.}
+
+\item{return_Sigma}{Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.}
+
+\item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
 }
 \value{
 A named list with the following components:
@@ -57,8 +71,9 @@ A named list with the following components:
   \item{stat}{The observed test statistic.}
   \item{km}{An integer vector of length \eqn{n} giving the cluster
   membership of each observation returned by the k-means algorithm.}
-  \item{Sigma}{The column covariance matrix used in the test, either provided
-  by the user or estimated from \code{Y}.}
+  \item{Sigma}{If \code{return_Sigma = TRUE}, the column covariance matrix used
+  in the test, either provided by the user or estimated from \code{Y}.}
+  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
 }
 }
 \description{

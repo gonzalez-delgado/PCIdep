@@ -26,10 +26,23 @@
 #' @param clusters Integer vector of length 2 containing the labels of the two clusters to compare. Its entries must belong to \code{1:NC}.
 #' @param linkage Character string specifying the linkage criterion used in hierarchical clustering. Must be one of \code{"single"},
 #'   \code{"average"}, \code{"centroid"}, \code{"ward.D"}, \code{"median"}, \code{"mcquitty"}, or \code{"complete"}.
+#'   When \code{hcl} is provided, the linkage is inferred from \code{hcl$method} and this argument is overridden.
+#'   If \code{linkage} is supplied explicitly alongside \code{hcl} but does not match \code{hcl$method}, a warning
+#'   is emitted and the method stored in \code{hcl} takes precedence.
+#' @param hcl An optional precomputed hierarchical clustering object of class \code{"hclust"}, as returned by
+#'   \code{fastcluster::hclust()} or \code{stats::hclust()} on the squared Euclidean distance matrix of \code{X}.
+#'   When supplied, the clustering step is skipped and the linkage criterion is inferred from \code{hcl$method},
+#'   overriding the \code{linkage} argument. Passing a precomputed \code{hcl} is useful when testing several
+#'   cluster pairs from the same clustering, as it avoids recomputing the dendrogram each time.
+#'   The number of leaves in \code{hcl} must equal \code{nrow(X)}; an error is raised otherwise.
+#'   Ignored (with a warning) when \code{sample_split = TRUE}, because sample splitting changes \code{X}
+#'   after the clustering would have been computed.
 #' @param ndraws Integer. Number of Monte Carlo samples used to approximate the p-value when \code{linkage = "complete"}. Ignored otherwise.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
 #' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
-#' 
+#' @param return_Sigma Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.
+#' @param return_X_clus Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.
+#'
 #' @details
 #' Selective type I error control is guaranteed when the row covariance matrix \eqn{\mathbf{U}} has a compound symmetry (CS) structure, i.e.,
 #' \deqn{
@@ -56,8 +69,9 @@
 #'   \code{linkage = "complete"}. This component is omitted otherwise.}
 #'   \item{hcl}{An integer vector of length \eqn{n} giving the cluster
 #'   membership of each observation in the partition with \code{NC} clusters.}
-#'   \item{Sigma}{The column covariance matrix used in the test, either provided
+#'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
 #'   by the user or estimated from \code{Y}.}
+#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
 #' }
 #'
 #' @examples
@@ -79,6 +93,17 @@
 #' )
 #' test.hc$pvalue
 #'
+#' # Testing two more cluster pairs reusing the same dendrogram
+#' hcl_obj <- fastcluster::hclust(dist(X)^2, method = "average")
+#' test.hc12 <- test.clusters.hc(
+#'   X = X, U = U, Sigma = Sigma,
+#'   NC = 3, clusters = c(1, 2), hcl = hcl_obj
+#' )
+#' test.hc13 <- test.clusters.hc(
+#'   X = X, U = U, Sigma = Sigma,
+#'   NC = 3, clusters = c(1, 3), hcl = hcl_obj
+#' )
+#'
 #' # Hierarchical clustering with complete linkage and estimated Sigma
 #' test.hc <- test.clusters.hc(
 #'   X = X, U = U, Sigma = NULL, Y = Y,
@@ -88,14 +113,18 @@
 #' test.hc$pvalue
 #'
 #' # Hierarchical clustering with complete linkage, estimated Sigma, and parallelization
+#' \dontrun{
 #' library(future)
-#' plan(multisession, workers = 4) # Set parallelization plan (adjust workers according to your machine)
+#' # Set parallelization plan (adjust workers according to your machine):
+#' plan(multisession, workers = 4)
 #' test.hc <- test.clusters.hc(
 #'   X = X, U = U, Sigma = NULL, Y = Y,
 #'   NC = 3, clusters = sample(1:3, 2),
 #'   linkage = "complete", ndraws = 500
 #' )
 #' test.hc$pvalue
+#' plan(sequential) # Reset to avoid leaving open connections
+#' }
 #'
 #' @references
 #' Gao, L. L., Bien, J., and Witten, D. (2022).
@@ -108,16 +137,52 @@
 #'
 #' @export
 
-test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, linkage = 'average', ndraws = 2000, sample_split = FALSE, nY = NULL){
+test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, linkage = 'average', hcl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
   
   # --------------- Initial checks and pre-processing ---------------
 
-  # Check for correct input linkage
-  if(!linkage%in%c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
-    stop('linkage must be one in "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".')}
+  # Validate or infer linkage
+  if(is.null(hcl)){
+    if(!linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
+      stop('linkage must be one in "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".')}
+  }else{
+    if (!inherits(hcl, "hclust")) {
+      stop("'hcl' must be an object of class 'hclust' as returned by fastcluster::hclust() or stats::hclust().")}
+    if (length(hcl$order) != nrow(X)) {
+      stop(paste0(
+        "'hcl' was built on ", length(hcl$order), " observations but X has ", nrow(X),
+        " rows. 'hcl' must be computed on the same data matrix X."
+      ))
+    }
+    inferred_linkage <- hcl$method
+    if(!inferred_linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
+      stop(paste0('The linkage method stored in the provided hcl object ("', inferred_linkage, '") is not supported. Must be one of "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".'))}
+    if(!missing(linkage) && linkage != inferred_linkage){
+      warning(paste0(
+        'The linkage argument ("', linkage, '") does not match the method stored in the provided hcl object ("',
+        inferred_linkage, '"). The linkage inferred from hcl will be used.'
+      ))
+    }
+    linkage <- inferred_linkage
+  }
+
+  # Discard precomputed hcl when sample splitting, since X changes after the split
+  if (!is.null(hcl) && sample_split) {
+    warning("'hcl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
+    hcl <- NULL
+  }
 
   # Check for correct clustering specification
   if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
+
+  # Check consistency between sample_split and return_X_clus
+  if(!sample_split & return_X_clus){
+    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
+    return_X_clus <- FALSE
+  }
+  if(sample_split & !return_X_clus){
+    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
+  }
   
   # Set up data and dependency structures, estimate Sigma if needed
   setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY)
@@ -127,9 +192,14 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # --------------- Cluster data ---------------
 
-  # Hierarchical clustering
-  dismat <- stats::dist(X, method = "euclidean")^2
-  hcl <- fastcluster::hclust(dismat, method = linkage) 
+  if (is.null(hcl)) {
+    # No precomputed clustering: compute distance matrix and dendrogram
+    dismat <- stats::dist(X, method = "euclidean")^2
+    hcl <- fastcluster::hclust(dismat, method = linkage)
+  } else if (linkage != "complete") {
+    # Precomputed hcl provided; the exact-computation path still needs dismat
+    dismat <- stats::dist(X, method = "euclidean")^2
+  }
 
   # --------------- Test for the difference of cluster means ---------------
   
@@ -162,7 +232,11 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     I2 <- suppressWarnings(intervals::interval_intersection(I1, SV^2))
     pv <- clusterpval::TChisqRatioApprox(dim(Sigma)[1], I2, SV^2)
     
-    return(list(pvalue = pv, stat = stat_V, hcl = hcl_at_K, Sigma = Sigma))}else{ # Complete linkage
+    return_list <- list(pvalue = pv, stat = stat_V, hcl = hcl_at_K)
+    if(return_Sigma){return_list$Sigma <- Sigma}
+    if(return_X_clus & sample_split){return_list$X_clus <- X}
+
+    return(return_list)}else{ # Complete linkage
       
       cat('Clustering with complete linkage. Monte-Carlo approximation of the p-value.\n')
       
@@ -222,7 +296,11 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       pv <- sum(props[phi >= stat_V])
       var_pv <- (1 - pv)^2*sum(props[phi >= stat_V]^2) + pv^2*sum(props[phi < stat_V]^2)
       
-      return(list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv), hcl = hcl_at_K, Sigma = Sigma))
+      return_list <- list(pvalue = pv, stat = stat_V, hcl = hcl_at_K, stderr = sqrt(var_pv))
+      if(return_Sigma){return_list$Sigma <- Sigma}
+      if(return_X_clus & sample_split){return_list$X_clus <- X}
+
+      return(return_list)
       
     }
 }

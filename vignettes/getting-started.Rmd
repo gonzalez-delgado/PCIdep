@@ -1,21 +1,163 @@
 ---
-title: "getting-started"
+title: "The problem of post-clustering inference"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{getting-started}
+  %\VignetteIndexEntry{The problem of post-clustering inference}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  warning = FALSE,
+  message = FALSE
 )
 ```
 
-```{r setup}
-library(PCIdep)
+
+# Why post-clustering inference?
+
+Clustering is one of the most common exploratory tools in statistics, biology, and data science. In a typical workflow, we observe a data matrix $\mathbf{X} \in \mathbb{R}^{n \times p}$, where the rows are observations and the columns are features. For example, the rows may be protein conformations, patients or cells, while the columns may be molecular distances, gene expression measurements, or other quantitative descriptors. 
+A clustering algorithm is then applied to the data in order to identify groups of similar observations. In many applications, these groups are interpreted as reflecting underlying biological, genetic, or functional structure in the data. However, 
+clustering is fundamentally an exploratory task, and interpreting its output is often much more difficult than obtaining the clustering itself. In practice, clustering raises several important statistical and interpretability questions:
+
+- What exactly is a _cluster_?
+- How stable are the discovered groups?
+- Do the detected clusters correspond to biologically meaningful differences?
+- Can apparent clusters arise purely from noise?
+
+Answering these questions rigorously requires statistical tools capable of quantifying uncertainty after the clustering step has already been performed. In other words, we need to answer the question:
+
+> _Are the clusters really different?_
+
+At first sight, this looks like a standard two-sample testing problem. However, there is a crucial complication: the clusters (and therefore the hypothesis to test) have been selected from the data.
+
+<div style="border-left: 4px solid #e6a817; background-color: #fdf6e3; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #b8860b;">&#9888; The double-dipping problem</strong><br/>
+  The problem is often called **double dipping**: the same data are used twice, first to discover the clusters and then to test whether those clusters differ. If we ignore this selection step and apply a
+  classical test as if the clusters had been fixed in advance, the resulting $p$-values loose the type I error control. This happens because clustering algorithms are designed to find groups that look different.
+  If we then test the difference between those same groups without accounting for the fact that they were selected to be different, we underestimate the amount of randomness involved.
+</div>
+
+<div style="margin-top: 1.5em;"></div>
+```{r double-dipping-figure, echo = FALSE, out.width = "60%", fig.align = "center"}
+knitr::include_graphics("figures/PCI_illustration.png")
+```
+<div style="margin-bottom: 1.5em;"></div>
+
+## A small simulation: why naive inference fails
+
+To illustrate the double-dipping issue in a simple setting, we simulate data with no true cluster structure: each observation is generated from the same Gaussian distribution.
+We then apply $k$-means clustering, randomly pick two of the resulting clusters, and perform a classical test comparing their empirical means.
+Repeating this many times shows what happens when the clustering step is ignored: under the null hypothesis the resulting $p$-values are no longer approximately uniform, 
+revealing the inflation of false positives caused by naive post-clustering inference.
+
+```{r double-dipping-simulation}
+set.seed(1)
+
+simulate_naive_pvalue <- function(n = 60, p = 5, k = 3) {
+
+  X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  cl <- kmeans(X, centers = k, nstart = 10)$cluster
+
+  groups <- split(seq_len(n), cl)
+  pair <- sample(seq_along(groups), 2)
+
+  g1 <- groups[[pair[1]]]
+  g2 <- groups[[pair[2]]]
+
+  x1 <- X[g1, , drop = FALSE]
+  x2 <- X[g2, , drop = FALSE]
+
+  diff <- colMeans(x1) - colMeans(x2)
+  s2 <- apply(X, 2, var)
+
+  stat <- sum(
+    diff^2 /
+    (s2 * (1 / length(g1) + 1 / length(g2)))
+  )
+
+  pchisq(stat, df = p, lower.tail = FALSE)
+
+}
+
+B <- 500
+p_naive <- replicate(B, simulate_naive_pvalue())
+
+alpha <- c(0.01, 0.05, 0.10)
+fp_rate <- sapply(alpha, function(a) mean(p_naive < a))
+
+knitr::kable(
+  data.frame(
+    `Significance level` = paste0(alpha * 100, "%"),
+    `Expected false positive rate` = paste0(alpha * 100, "%"),
+    `Observed false positive rate` = paste0(round(fp_rate * 100, 1), "%"),
+    check.names = FALSE
+  ),
+  align = "ccc",
+  caption = "Proportion of rejections under the null hypothesis using naive inference after k-means clustering (500 simulations). Without accounting for the clustering step, the false positive rate is severely inflated above the nominal level."
+)
 ```
 
-This vignette is under construction and will be expanded in a future update.
+
+
+## Addressing double-dipping
+
+[Selective inference](https://arxiv.org/abs/1410.2597) is the statistical theory that aims, among other goals, to provide principled strategies to avoid double-dipping when the model, hypothesis, or question is chosen adaptively from data.
+In this data-driven setting, the literature proposes several [families of approaches](https://doi.org/10.1162/99608f92.fc62b261), including (but not limited to): simultaneous inference, [universal inference](https://doi.org/10.1073/pnas.1922664117), 
+sample splitting, data fission/thinning, and conditional inference. Up-to-date, _only conditional-based approaches have been shown efficient in the context of inference after clustering_, starting with the seminal work of
+[Gao _et al._ (JASA, 2022)](https://doi.org/10.1080/01621459.2022.2116331). 
+
+<div style="border-left: 4px solid #27ae60; background-color: #eafaf1; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #27ae60;">💡 Suitability of data fission/thinning for post-clustering inference</strong><br/>
+  The suitability of techniques like data fission/thinning ([Leiner _et al._, 2023](https://doi.org/10.1080/01621459.2023.2270748), [Neufeld _et al._, 2025](https://doi.org/10.1080/01621459.2024.2421998))
+  still remains an open question in the context of inference after clustering. Despite notable [recent advances in parameter estimation](https://doi.org/10.1093/biomet/asaf057), robust estimation 
+  in the context of clustering remains unclear, as discussed by [Hivert _et al. (2026)_](https://arxiv.org/abs/2405.13591).
+</div>
+
+# Selective type I error: the conditional inference approach
+
+Post-clustering inference aims to control the probability of false rejection **conditional on the clustering event**. This is referred to as _selective_ type I error control.
+More formally, if \(\mathcal{C}(\mathbf{X})\) denotes the clustering partition obtained from the data and \(C_1\), \(C_2\) are two clusters found by the algorithm, the selective type I error is 
+controlled at level \(\alpha\) if
+
+\[
+\mathbb{P}_{H_0^{\{C_1,C_2\}}}
+\left(
+\text{reject } H_0^{\{C_1,C_2\}} \mid C_1,C_2 \in \mathcal{C}(\mathbf{X})
+\right)
+\leq \alpha,
+\]
+
+where $H_0$ is the null hypothesis of equality of clusters, that needs to be precised for a given data model.
+
+# The statistical model
+
+The `PCIdep` package is designed for post-clustering inference under a matrix normal model with possible dependence between observations and/or features:
+
+\[
+\mathbf{X} \sim \mathcal{MN}_{n \times p}(\boldsymbol{\mu}, \mathbf{U}, \boldsymbol{\Sigma}).
+\]
+
+Here:
+
+- \(\boldsymbol{\mu} \in \mathbb{R}^{n \times p}\) is the mean matrix;
+- \(\mathbf{U} \in \mathbb{R}^{n \times n}\) describes dependence between observations;
+- \(\boldsymbol{\Sigma} \in \mathbb{R}^{p \times p}\) describes dependence between features.
+
+Equivalently,
+
+\[
+\mathrm{vec}(\mathbf{X}) \sim \mathcal{N}_{np}\left(\mathrm{vec}(\boldsymbol{\mu}), \boldsymbol{\Sigma} \otimes \mathbf{U}\right).
+\]
+
+<div style="border-left: 4px solid #e74c3c; background-color: #fdf2f2; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #c0392b;">🚧 Work in progress</strong><br/>
+  This vignette is currently under construction and not yet complete. Content may be missing, incomplete, or subject to change.
+</div>
+
+

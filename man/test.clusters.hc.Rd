@@ -14,9 +14,12 @@ test.clusters.hc(
   NC,
   clusters,
   linkage = "average",
+  hcl = NULL,
   ndraws = 2000,
   sample_split = FALSE,
-  nY = NULL
+  nY = NULL,
+  return_Sigma = FALSE,
+  return_X_clus = FALSE
 )
 }
 \arguments{
@@ -43,13 +46,28 @@ rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity
 \item{clusters}{Integer vector of length 2 containing the labels of the two clusters to compare. Its entries must belong to \code{1:NC}.}
 
 \item{linkage}{Character string specifying the linkage criterion used in hierarchical clustering. Must be one of \code{"single"},
-\code{"average"}, \code{"centroid"}, \code{"ward.D"}, \code{"median"}, \code{"mcquitty"}, or \code{"complete"}.}
+\code{"average"}, \code{"centroid"}, \code{"ward.D"}, \code{"median"}, \code{"mcquitty"}, or \code{"complete"}.
+When \code{hcl} is provided, the linkage is inferred from \code{hcl$method} and this argument is overridden.
+If \code{linkage} is supplied explicitly alongside \code{hcl} but does not match \code{hcl$method}, a warning
+is emitted and the method stored in \code{hcl} takes precedence.}
+
+\item{hcl}{An optional precomputed hierarchical clustering object of class \code{"hclust"}, as returned by
+\code{fastcluster::hclust()} or \code{stats::hclust()} on the squared Euclidean distance matrix of \code{X}.
+When supplied, the clustering step is skipped and the linkage criterion is inferred from \code{hcl$method},
+overriding the \code{linkage} argument. Passing a precomputed \code{hcl} is useful when testing several
+cluster pairs from the same clustering, as it avoids recomputing the dendrogram each time.
+Ignored (with a warning) when \code{sample_split = TRUE}, because sample splitting changes \code{X}
+after the clustering would have been computed.}
 
 \item{ndraws}{Integer. Number of Monte Carlo samples used to approximate the p-value when \code{linkage = "complete"}. Ignored otherwise.}
 
 \item{sample_split}{Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.}
 
 \item{nY}{Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.}
+
+\item{return_Sigma}{Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.}
+
+\item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
 }
 \value{
 A named list with the following components:
@@ -61,8 +79,9 @@ A named list with the following components:
   \code{linkage = "complete"}. This component is omitted otherwise.}
   \item{hcl}{An integer vector of length \eqn{n} giving the cluster
   membership of each observation in the partition with \code{NC} clusters.}
-  \item{Sigma}{The column covariance matrix used in the test, either provided
+  \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
   by the user or estimated from \code{Y}.}
+  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
 }
 }
 \description{
@@ -88,7 +107,8 @@ does not deviate substantially from the compound symmetry structure.
 When \code{Sigma = NULL}, the column covariance matrix is estimated from an auxiliary independent sample \code{Y}. When \code{U = NULL}, row-wise independence is assumed.
 
 For linkage criteria other than \code{"complete"}, the p-value is computed using an exact characterization of the truncation region, adapted from
-\pkg{clusterpval}. For \code{"complete"} linkage, the truncation region is not computed explicitly and the p-value is approximated by Monte Carlo.
+\pkg{clusterpval}. For \code{"complete"} linkage, the truncation region is not computed explicitly and the p-value is approximated by Monte Carlo. In
+this case, the Monte Carlo procedure can be automatically parallelized using the \pkg{future} package (see examples).
 }
 \examples{
 n <- 50
@@ -109,6 +129,17 @@ test.hc <- test.clusters.hc(
 )
 test.hc$pvalue
 
+# Testing two more cluster pairs reusing the same dendrogram
+hcl_obj <- fastcluster::hclust(dist(X)^2, method = "average")
+test.hc12 <- test.clusters.hc(
+  X = X, U = U, Sigma = Sigma,
+  NC = 3, clusters = c(1, 2), hcl = hcl_obj
+)
+test.hc13 <- test.clusters.hc(
+  X = X, U = U, Sigma = Sigma,
+  NC = 3, clusters = c(1, 3), hcl = hcl_obj
+)
+
 # Hierarchical clustering with complete linkage and estimated Sigma
 test.hc <- test.clusters.hc(
   X = X, U = U, Sigma = NULL, Y = Y,
@@ -116,6 +147,20 @@ test.hc <- test.clusters.hc(
   linkage = "complete"
 )
 test.hc$pvalue
+
+# Hierarchical clustering with complete linkage, estimated Sigma, and parallelization
+\dontrun{
+library(future)
+# Set parallelization plan (adjust workers according to your machine):
+plan(multisession, workers = 4)
+test.hc <- test.clusters.hc(
+  X = X, U = U, Sigma = NULL, Y = Y,
+  NC = 3, clusters = sample(1:3, 2),
+  linkage = "complete", ndraws = 500
+)
+test.hc$pvalue
+plan(sequential) # Reset to avoid leaving open connections
+}
 
 }
 \references{

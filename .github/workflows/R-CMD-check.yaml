@@ -1,0 +1,85 @@
+# Continuous integration: build and test the PCIdep package.
+#
+# Triggered on every push to any branch and on every pull request targeting
+# main or devel.  The workflow runs R CMD check, which executes the full
+# testthat suite together with the standard CRAN checks (documentation,
+# examples, vignettes).
+#
+# Dependencies are resolved from DESCRIPTION (including the GitHub remotes
+# for clusterpval and KmeansInference) by r-lib/actions/setup-r-dependencies.
+
+on:
+  push:
+  pull_request:
+    branches: [main, devel]
+
+name: R CMD check
+
+permissions:
+  contents: read
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (R ${{ matrix.config.r }})
+
+    strategy:
+      # Keep going if one matrix leg fails so we can see all results at once.
+      fail-fast: false
+      matrix:
+        config:
+          - { os: ubuntu-latest, r: "release" }
+          - { os: ubuntu-latest, r: "devel"   }
+          - { os: macos-latest,  r: "release" }
+          - { os: windows-latest, r: "release" }
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # Make R CMD check warnings into errors on the release build only.
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          # Use the RStudio public package manager for fast binary installs on
+          # Linux.
+          use-public-rspm: true
+
+      # Installs all packages listed in Imports, Suggests, and Remotes.
+      # The 'check' extra-packages set pulls in rcmdcheck itself.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - name: Check package
+        shell: Rscript {0}
+        run: |
+          results <- rcmdcheck::rcmdcheck(
+            args     = c("--no-manual", "--as-cran"),
+            error_on = "never",
+            check_dir = "check"
+          )
+          # Ignore the unavoidable CeCILL-B non-standard license warning.
+          # All other warnings and all errors are still fatal.
+          non_license_warnings <- results$warnings[
+            !grepl("CeCILL", results$warnings, fixed = TRUE)
+          ]
+          if (length(results$errors) > 0 || length(non_license_warnings) > 0) {
+            print(results)
+            stop("R CMD check found ERRORs or WARNINGs (excluding the CeCILL-B license warning).")
+          }
+          print(results)
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.config.os }}-r${{ matrix.config.r }}-results
+          path: check

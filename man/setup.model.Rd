@@ -39,19 +39,19 @@ A list containing the following elements:
 \item{Sigma}{\eqn{p \times p} positive-definite matrix representing the dependence structure among variables in \code{X}. If not provided, it is estimated using \code{Y} and \code{UY}.}
 }
 \description{
-Prepares the data matrix \code{X} and the dependence structures \code{U} and \code{Sigma} for clustering and testing. If \code{Sigma} is not provided, it is be estimated using an i.i.d. sample \code{Y} of the same variables,
+Prepares the data matrix \code{X} and the dependence structures \code{U} and \code{Sigma} for clustering and testing. If \code{Sigma} is not provided, it is estimated using an i.i.d. sample \code{Y} of the same variables,
 with an associated dependence structure \code{UY}. Sample splitting can be used to generate \code{Y} from \code{X} when observations are independent.
 Checks are performed to ensure the compatibility of the dimensions of the data and dependence structures, and to verify the positive-definiteness of \code{U} and \code{Sigma}.
 }
 \examples{
 # Example with independent observations and known Sigma
-X <- matrix(rnorm(100 * 5), nrow = 10, ncol = 5)
+X <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 Sigma <- diag(5)
 setup_result <- setup.model(X = X, Sigma = Sigma)
 print(setup_result)
 # Example with dependent observations and unknown Sigma, using sample splitting
-X <- matrix(rnorm(100 * 5), nrow = 10, ncol = 5)
-U <- matrix(0.3, nrow = 10, ncol = 10)
+X <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
+U <- matrix(0.3, nrow = 100, ncol = 100)
 diag(U) <- 1
 setup_result <- setup.model(X = X, U = U, sample_split = TRUE)
 print(setup_result)
