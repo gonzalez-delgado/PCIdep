@@ -149,6 +149,7 @@ test.hc <- test.clusters.hc(
 test.hc$pvalue
 
 # Hierarchical clustering with complete linkage, estimated Sigma, and parallelization
+\dontrun{
 library(future)
 # Set parallelization plan (adjust workers according to your machine):
 plan(multisession, workers = 4)
@@ -158,6 +159,8 @@ test.hc <- test.clusters.hc(
   linkage = "complete", ndraws = 500
 )
 test.hc$pvalue
+plan(sequential) # Reset to avoid leaving open connections
+}
 
 }
 \references{
