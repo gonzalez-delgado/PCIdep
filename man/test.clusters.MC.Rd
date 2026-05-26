@@ -70,7 +70,7 @@ A named list with the following components:
   membership of each observation.}
   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
   by the user or estimated from \code{Y}.}
-  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
+  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering/testing (i.e., the subsample of \code{X} retained for the clustering step).}
 }
 }
 \description{

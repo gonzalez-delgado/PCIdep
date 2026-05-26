@@ -145,7 +145,7 @@
 #'
 #' @export
 
-test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, linkage = 'average', hcl = NULL, dismat = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
+test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, linkage = 'average', hcl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE, dismat = NULL){
   
   # --------------- Initial checks and pre-processing ---------------
 
@@ -182,6 +182,19 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   if (!is.null(dismat) && sample_split) {
     warning("'dismat' is ignored when sample_split = TRUE because X is modified after splitting. The distance matrix will be recomputed on the subsample.")
     dismat <- NULL
+  }
+
+  # Validate dismat class and size
+  if (!is.null(dismat)) {
+    if (!inherits(dismat, "dist")) {
+      stop("'dismat' must be an object of class 'dist' as returned by stats::dist(X, method = 'euclidean')^2.")
+    }
+    if (attr(dismat, "Size") != nrow(X)) {
+      stop(paste0(
+        "'dismat' was built on ", attr(dismat, "Size"), " observations but X has ", nrow(X),
+        " rows. 'dismat' must be computed on the same data matrix X."
+      ))
+    }
   }
 
   # Warn about incomplete precomputation: dismat without hcl, or hcl without dismat
