@@ -71,13 +71,13 @@ after the clustering would have been computed.}
 
 \item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
 
-\item{dismat}{An optional precomputed squared Euclidean distance matrix of class \code{"dist"}, as returned by
-\code{stats::dist(X, method = "euclidean")^2}. When supplied alongside \code{hcl}, both the distance matrix
+\item{dismat}{An optional precomputed squared Euclidean distance object of class \code{"dist"}, as returned by
+\code{stats::dist(X, method = "euclidean")^2}. When supplied alongside \code{hcl}, both the distance object
 and the dendrogram computations are skipped, which is useful when testing several cluster pairs from the same
 clustering. When supplied without \code{hcl}, a warning is emitted and the dendrogram is computed from
 \code{dismat}. When \code{hcl} is supplied without \code{dismat} and the linkage is not \code{"complete"},
 a warning is emitted and \code{dismat} is recomputed internally. Ignored (with a warning) when
-\code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance matrix would
+\code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance object would
 have been computed.}
 }
 \value{

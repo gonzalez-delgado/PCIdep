@@ -149,7 +149,7 @@ res_23$pvalue
 res_13 <- test.clusters.MC(X, clusters = c(1, 3), cl_fun = hdbscan_fun, NC = NULL, cl = NULL, ndraws = 500, sample_split = TRUE)
 res_13$pvalue
 
-plan(sequential) # Reset to sequential plan to avoid leaking workers
+future::plan(future::sequential) # Reset to sequential plan to avoid leaking workers
 ```
 
 The reported $p$-values indicate that the clusters are significantly different.

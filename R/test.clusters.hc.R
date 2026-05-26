@@ -37,13 +37,13 @@
 #'   The number of leaves in \code{hcl} must equal \code{nrow(X)}; an error is raised otherwise.
 #'   Ignored (with a warning) when \code{sample_split = TRUE}, because sample splitting changes \code{X}
 #'   after the clustering would have been computed.
-#' @param dismat An optional precomputed squared Euclidean distance matrix of class \code{"dist"}, as returned by
-#'   \code{stats::dist(X, method = "euclidean")^2}. When supplied alongside \code{hcl}, both the distance matrix
+#' @param dismat An optional precomputed squared Euclidean distance object of class \code{"dist"}, as returned by
+#'   \code{stats::dist(X, method = "euclidean")^2}. When supplied alongside \code{hcl}, both the distance object
 #'   and the dendrogram computations are skipped, which is useful when testing several cluster pairs from the same
 #'   clustering. When supplied without \code{hcl}, a warning is emitted and the dendrogram is computed from
 #'   \code{dismat}. When \code{hcl} is supplied without \code{dismat} and the linkage is not \code{"complete"},
 #'   a warning is emitted and \code{dismat} is recomputed internally. Ignored (with a warning) when
-#'   \code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance matrix would
+#'   \code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance object would
 #'   have been computed.
 #' @param ndraws Integer. Number of Monte Carlo samples used to approximate the p-value when \code{linkage = "complete"}. Ignored otherwise.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
@@ -149,6 +149,18 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # --------------- Initial checks and pre-processing ---------------
 
+  # Discard precomputed hcl and dismat when sample splitting, since X changes
+  # after the split.  Do this first so linkage is inferred from the explicit
+  # argument rather than from a stale hcl$method.
+  if (!is.null(hcl) && sample_split) {
+    warning("'hcl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
+    hcl <- NULL
+  }
+  if (!is.null(dismat) && sample_split) {
+    warning("'dismat' is ignored when sample_split = TRUE because X is modified after splitting. The distance matrix will be recomputed on the subsample.")
+    dismat <- NULL
+  }
+
   # Validate or infer linkage
   if(is.null(hcl)){
     if(!linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
@@ -172,16 +184,6 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       ))
     }
     linkage <- inferred_linkage
-  }
-
-  # Discard precomputed hcl and dismat when sample splitting, since X changes after the split
-  if (!is.null(hcl) && sample_split) {
-    warning("'hcl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
-    hcl <- NULL
-  }
-  if (!is.null(dismat) && sample_split) {
-    warning("'dismat' is ignored when sample_split = TRUE because X is modified after splitting. The distance matrix will be recomputed on the subsample.")
-    dismat <- NULL
   }
 
   # Validate dismat class and size
