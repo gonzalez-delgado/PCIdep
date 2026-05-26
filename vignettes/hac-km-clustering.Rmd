@@ -132,7 +132,7 @@ Now we are interested in assessing whether the difference between the retrieved 
   <strong style="color: #1f78d1;">📝 Note</strong><br/>
   The <code>test.clusters.hc()</code> function does not require the clustering to be performed beforehand. It performs the hierarchical clustering automatically given
   a linkage method and a number of clusters, so the previous code was only illustrative. However, if the user prefers to perform clustering beforehand, they can
-  provide a `stats::hclust()` or `fastcluster::hclust()` object via the <code>hcl</code> parameter. In this case, the function will not perform clustering and will directly
+  provide a `stats::hclust()` or `fastcluster::hclust()` object via the <code>hcl</code> parameter, as well as the squared distance matrix via the <code>dismat</code> parameter. In this case, the function will not perform clustering and will directly
   test the provided clusters. This can be useful when multiple cluster pairs from the same partition or dendrogram are to be tested.
 </div>
 
@@ -204,7 +204,7 @@ The `test.clusters.km()` function performs post-clustering inference for $k$-mea
 
 <div style="border-left: 4px solid #1f78d1; background-color: #eaf3ff; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
   <strong style="color: #1f78d1;">📝 Note</strong><br/>
-  For <code>test.clusters.km()</code>, the user can also provide an <code>aKmeansInference::kmeans_inference()</code> object via the <code>km_at_cl</code> parameter.
+  For <code>test.clusters.km()</code>, the user can also provide an <code>KmeansInference::kmeans_inference()</code> object via the <code>km_at_cl</code> parameter.
   In this case, the function will not perform <em>k</em>-means again and will directly test the provided clustering result.
 </div>
 

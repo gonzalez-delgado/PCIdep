@@ -64,7 +64,7 @@
 #'   membership of each observation returned by the k-means algorithm.}
 #'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in
 #'   the test, either provided by the user or estimated from \code{Y}.}
-#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
+#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix (subsample of \code{X}) used for clustering and testing.}
 #' }
 #'
 #' @examples

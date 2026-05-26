@@ -19,7 +19,8 @@ test.clusters.hc(
   sample_split = FALSE,
   nY = NULL,
   return_Sigma = FALSE,
-  return_X_clus = FALSE
+  return_X_clus = FALSE,
+  dismat = NULL
 )
 }
 \arguments{
@@ -56,6 +57,7 @@ is emitted and the method stored in \code{hcl} takes precedence.}
 When supplied, the clustering step is skipped and the linkage criterion is inferred from \code{hcl$method},
 overriding the \code{linkage} argument. Passing a precomputed \code{hcl} is useful when testing several
 cluster pairs from the same clustering, as it avoids recomputing the dendrogram each time.
+The number of leaves in \code{hcl} must equal \code{nrow(X)}; an error is raised otherwise.
 Ignored (with a warning) when \code{sample_split = TRUE}, because sample splitting changes \code{X}
 after the clustering would have been computed.}
 
@@ -68,6 +70,15 @@ after the clustering would have been computed.}
 \item{return_Sigma}{Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.}
 
 \item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
+
+\item{dismat}{An optional precomputed squared Euclidean distance object of class \code{"dist"}, as returned by
+\code{stats::dist(X, method = "euclidean")^2}. When supplied alongside \code{hcl}, both the distance object
+and the dendrogram computations are skipped, which is useful when testing several cluster pairs from the same
+clustering. When supplied without \code{hcl}, a warning is emitted and the dendrogram is computed from
+\code{dismat}. When \code{hcl} is supplied without \code{dismat} and the linkage is not \code{"complete"},
+a warning is emitted and \code{dismat} is recomputed internally. Ignored (with a warning) when
+\code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance object would
+have been computed.}
 }
 \value{
 A named list with the following components:
@@ -81,7 +92,7 @@ A named list with the following components:
   membership of each observation in the partition with \code{NC} clusters.}
   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
   by the user or estimated from \code{Y}.}
-  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
+  \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering and testing (i.e., the subsample of \code{X} retained after sample splitting).}
 }
 }
 \description{

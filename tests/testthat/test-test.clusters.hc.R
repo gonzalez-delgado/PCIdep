@@ -160,12 +160,15 @@ test_that("test.clusters.hc gives the same result with a precomputed hcl", {
   d <- make_hc_data()
   hcl_obj <- fastcluster::hclust(stats::dist(d$X)^2, method = "average")
   res_internal <- suppressMessages(run_hc(d, clusters = c(1, 3)))
-  res_external <- suppressMessages(
-    test.clusters.hc(
-      X = d$X, U = d$U, Sigma = d$Sigma,
-      NC = 3, clusters = c(1, 3),
-      hcl = hcl_obj
-    )
+  expect_warning(
+    res_external <- suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 3),
+        hcl = hcl_obj
+      )
+    ),
+    regexp = "'hcl' is provided but 'dismat' is not"
   )
   expect_equal(res_internal$pvalue, res_external$pvalue)
   expect_equal(res_internal$stat,   res_external$stat)
@@ -177,12 +180,15 @@ test_that("test.clusters.hc gives the same result with a precomputed hcl", {
 test_that("test.clusters.hc accepts a precomputed hcl for a different cluster pair", {
   d <- make_hc_data()
   hcl_obj <- fastcluster::hclust(stats::dist(d$X)^2, method = "average")
-  res <- suppressMessages(
-    test.clusters.hc(
-      X = d$X, U = d$U, Sigma = d$Sigma,
-      NC = 3, clusters = c(1, 2),
-      hcl = hcl_obj
-    )
+  expect_warning(
+    res <- suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 2),
+        hcl = hcl_obj
+      )
+    ),
+    regexp = "'hcl' is provided but 'dismat' is not"
   )
   expect_gte(res$pvalue, 0)
   expect_lte(res$pvalue, 1)
@@ -210,11 +216,17 @@ test_that("test.clusters.hc warns and overrides linkage when it mismatches hcl$m
   # Passing linkage = "single" must warn but produce the same result as average
   expect_warning(
     res <- suppressMessages(
-      test.clusters.hc(
-        X = d$X, U = d$U, Sigma = d$Sigma,
-        NC = 3, clusters = c(1, 3),
-        linkage = "single",
-        hcl = hcl_obj
+      withCallingHandlers(
+        test.clusters.hc(
+          X = d$X, U = d$U, Sigma = d$Sigma,
+          NC = 3, clusters = c(1, 3),
+          linkage = "single",
+          hcl = hcl_obj
+        ),
+        warning = function(w) {
+          if (grepl("dismat", conditionMessage(w)))
+            invokeRestart("muffleWarning")
+        }
       )
     ),
     regexp = "does not match"
@@ -325,4 +337,154 @@ test_that("test.clusters.hc works with sample splitting", {
   ))
   expect_gte(res$pvalue, 0)
   expect_lte(res$pvalue, 1)
+})
+
+# ---- dismat parameter ---------------------------------------------------
+
+# Providing both hcl and dismat should produce exactly the same result as
+# computing both internally, and must not trigger any warnings.
+test_that("test.clusters.hc gives the same result with precomputed hcl and dismat", {
+  d <- make_hc_data()
+  dismat_obj <- stats::dist(d$X, method = "euclidean")^2
+  hcl_obj    <- fastcluster::hclust(dismat_obj, method = "average")
+  res_internal <- suppressMessages(run_hc(d, clusters = c(1, 3)))
+  expect_no_warning(
+    res_external <- suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 3),
+        hcl = hcl_obj, dismat = dismat_obj
+      )
+    )
+  )
+  expect_equal(res_internal$pvalue, res_external$pvalue)
+  expect_equal(res_internal$stat,   res_external$stat)
+  expect_equal(res_internal$hcl,    res_external$hcl)
+})
+
+# Providing dismat without hcl must warn that the dendrogram will be computed
+# from dismat, but the result must still be valid and match internal computation.
+test_that("test.clusters.hc warns when dismat is given without hcl and still works", {
+  d <- make_hc_data()
+  dismat_obj <- stats::dist(d$X, method = "euclidean")^2
+  res_internal <- suppressMessages(run_hc(d, clusters = c(1, 3)))
+  expect_warning(
+    res_external <- suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 3),
+        dismat = dismat_obj
+      )
+    ),
+    regexp = "hcl.*not"
+  )
+  expect_equal(res_internal$pvalue, res_external$pvalue)
+  expect_equal(res_internal$stat,   res_external$stat)
+})
+
+# Providing hcl without dismat for a non-complete linkage must warn that the
+# distance matrix will be recomputed, but the result must still be valid.
+test_that("test.clusters.hc warns when hcl is given without dismat for non-complete linkage", {
+  d <- make_hc_data()
+  hcl_obj <- fastcluster::hclust(stats::dist(d$X)^2, method = "average")
+  expect_warning(
+    res <- suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 3),
+        hcl = hcl_obj
+      )
+    ),
+    regexp = "dismat.*not"
+  )
+  expect_gte(res$pvalue, 0)
+  expect_lte(res$pvalue, 1)
+})
+
+# Providing hcl without dismat for complete linkage must NOT warn about dismat,
+# because the MC path does not use dismat at all.
+test_that("test.clusters.hc does not warn about missing dismat for complete linkage", {
+  d <- make_hc_data()
+  hcl_obj <- fastcluster::hclust(stats::dist(d$X)^2, method = "complete")
+  expect_no_warning(
+    res <- suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 3),
+        hcl = hcl_obj, ndraws = 200
+      )
+    )
+  )
+  expect_gte(res$pvalue, 0)
+  expect_lte(res$pvalue, 1)
+})
+
+# When sample_split = TRUE, a precomputed dismat is stale because X changes
+# after splitting.  The function must warn and recompute dismat on the subsample.
+test_that("test.clusters.hc warns and ignores dismat when sample_split = TRUE", {
+  set.seed(11)
+  n <- 60; p <- 5
+  X <- rbind(
+    matrix(rnorm(20 * p, mean = -4), nrow = 20),
+    matrix(rnorm(20 * p, mean =  0), nrow = 20),
+    matrix(rnorm(20 * p, mean =  4), nrow = 20)
+  )
+  dismat_obj <- stats::dist(X, method = "euclidean")^2
+  expect_warning(
+    suppressMessages(
+      withCallingHandlers(
+        test.clusters.hc(
+          X = X, U = NULL, Sigma = NULL,
+          NC = 3, clusters = c(1, 3),
+          dismat = dismat_obj,
+          sample_split = TRUE
+        ),
+        warning = function(w) {
+          if (grepl("Consider setting", conditionMessage(w)))
+            invokeRestart("muffleWarning")
+        }
+      )
+    ),
+    regexp = "dismat.*ignored when sample_split"
+  )
+})
+
+# A dismat that is not a dist object must be rejected immediately.
+test_that("test.clusters.hc stops when dismat is not a dist object", {
+  d <- make_hc_data()
+  expect_error(
+    suppressMessages(run_hc(d, dismat = as.matrix(stats::dist(d$X)^2))),
+    regexp = "class 'dist'"
+  )
+})
+
+# A dismat built on the wrong number of observations must be caught before any
+# distance/clustering computation is attempted.
+test_that("test.clusters.hc stops when dismat has wrong number of observations", {
+  d <- make_hc_data()
+  X_other <- matrix(rnorm(10 * d$p), nrow = 10)
+  dismat_wrong <- stats::dist(X_other, method = "euclidean")^2
+  expect_error(
+    suppressMessages(run_hc(d, dismat = dismat_wrong)),
+    regexp = "nrow\\(X\\)|rows"
+  )
+})
+
+# Providing a dismat with the correct size alongside an hcl built on the wrong
+# number of observations must be caught by the existing hcl size check.
+test_that("test.clusters.hc stops when hcl has wrong size even if dismat size matches X", {
+  d <- make_hc_data()
+  dismat_obj <- stats::dist(d$X, method = "euclidean")^2
+  X_other    <- matrix(rnorm(10 * d$p), nrow = 10)
+  hcl_other  <- fastcluster::hclust(stats::dist(X_other)^2, method = "average")
+  expect_error(
+    suppressMessages(
+      test.clusters.hc(
+        X = d$X, U = d$U, Sigma = d$Sigma,
+        NC = 3, clusters = c(1, 3),
+        hcl = hcl_other, dismat = dismat_obj
+      )
+    ),
+    regexp = "nrow\\(X\\)|rows"
+  )
 })

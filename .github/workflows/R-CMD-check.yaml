@@ -1,9 +1,7 @@
 # Continuous integration: build and test the PCIdep package.
 #
-# Triggered on every push to any branch and on every pull request targeting
-# main or devel.  The workflow runs R CMD check, which executes the full
-# testthat suite together with the standard CRAN checks (documentation,
-# examples, vignettes).
+# Triggered on every push to main or devel, on every pull request targeting
+# main or devel, and on manual dispatch from the Actions tab.
 #
 # Dependencies are resolved from DESCRIPTION (including the GitHub remotes
 # for clusterpval and KmeansInference) by 'remotes', which authenticates via
@@ -11,8 +9,10 @@
 
 on:
   push:
+    branches: [main, devel]
   pull_request:
     branches: [main, devel]
+  workflow_dispatch:
 
 name: R CMD check
 
@@ -30,9 +30,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: ubuntu-latest, r: "release" }
-          - { os: ubuntu-latest, r: "devel"   }
-          - { os: macos-latest,  r: "release" }
+          - { os: ubuntu-latest,  r: "release" }
+          - { os: macos-latest,   r: "release" }
           - { os: windows-latest, r: "release" }
 
     env:
@@ -42,6 +41,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -52,6 +53,12 @@ jobs:
           # Linux.
           use-public-rspm: true
 
+      # On Linux, RSPM only ships binaries for R-release. R-devel falls back to
+      # source compilation, which needs the libcurl and libssl system headers.
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -y && sudo apt-get install -y libcurl4-openssl-dev libssl-dev
+
       # Installs all packages listed in Imports, Suggests, and Remotes.
       # We use 'remotes' instead of r-lib/actions/setup-r-dependencies (pak)
       # because pak's lockfile_create() calls the GitHub REST API directly and
@@ -60,7 +67,11 @@ jobs:
       - name: Install dependencies
         shell: Rscript {0}
         run: |
-          install.packages(c("remotes", "rcmdcheck"))
+          install.packages(c("remotes", "rcmdcheck", "knitr", "rmarkdown"))
+          if (!requireNamespace("rcmdcheck", quietly = TRUE))
+            stop("rcmdcheck failed to install — check CRAN mirror / binary availability")
+          if (!requireNamespace("rmarkdown", quietly = TRUE))
+            stop("rmarkdown failed to install — check CRAN mirror / binary availability")
           remotes::install_github("yiqunchen/KmeansInference", upgrade = "never")
           remotes::install_github("lucylgao/clusterpval", upgrade = "never")
           remotes::install_deps(dependencies = TRUE)

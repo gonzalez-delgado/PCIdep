@@ -220,7 +220,10 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # Return nothing if nothing survives
   if(survives == 0) {
     warning("No samples that preserved the clusters were generated. Try re-running with a larger value of ndraws.")
-    return(list(stat = stat_V, pvalue = NA, stderr = NA, clusters = cl))
+    return_list <- list(stat = stat_V, pvalue = NA, stderr = NA, clusters = cl)
+    if(return_Sigma){return_list$Sigma <- Sigma}
+    if(return_X_clus & sample_split){return_list$X_clus <- X}
+    return(return_list)
   }
       
   #  Approximate p-values
