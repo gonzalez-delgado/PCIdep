@@ -54,6 +54,12 @@ jobs:
           # Linux.
           use-public-rspm: true
 
+      # On Linux, RSPM only ships binaries for R-release. R-devel falls back to
+      # source compilation, which needs the libcurl and libssl system headers.
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -y && sudo apt-get install -y libcurl4-openssl-dev libssl-dev
+
       # Installs all packages listed in Imports, Suggests, and Remotes.
       # We use 'remotes' instead of r-lib/actions/setup-r-dependencies (pak)
       # because pak's lockfile_create() calls the GitHub REST API directly and
