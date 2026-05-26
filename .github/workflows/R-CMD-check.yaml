@@ -63,6 +63,8 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages(c("remotes", "rcmdcheck"))
+          if (!requireNamespace("rcmdcheck", quietly = TRUE))
+            stop("rcmdcheck failed to install — check CRAN mirror / binary availability")
           remotes::install_github("yiqunchen/KmeansInference", upgrade = "never")
           remotes::install_github("lucylgao/clusterpval", upgrade = "never")
           remotes::install_deps(dependencies = TRUE)
