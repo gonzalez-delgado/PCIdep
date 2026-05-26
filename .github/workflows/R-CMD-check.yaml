@@ -1,9 +1,7 @@
 # Continuous integration: build and test the PCIdep package.
 #
-# Triggered on every push to any branch and on every pull request targeting
-# main or devel.  The workflow runs R CMD check, which executes the full
-# testthat suite together with the standard CRAN checks (documentation,
-# examples, vignettes).
+# Triggered on every push to main or devel, on every pull request targeting
+# main or devel, and on manual dispatch from the Actions tab.
 #
 # Dependencies are resolved from DESCRIPTION (including the GitHub remotes
 # for clusterpval and KmeansInference) by 'remotes', which authenticates via
@@ -11,6 +9,7 @@
 
 on:
   push:
+    branches: [main, devel]
   pull_request:
     branches: [main, devel]
   workflow_dispatch:
