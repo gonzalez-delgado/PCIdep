@@ -220,8 +220,9 @@ preserve.cl <- function(cl, cl_phi, clusters) {
   
   in_k1 <- length(new_cl1) == 1 # Individuals in the first clusters stay all in the same cluster
   in_k2 <- length(new_cl2) == 1 # Individuals in the second clusters stay all in the same cluster
+  distinct_k1_k2 <- length(intersect(new_cl1, new_cl2)) == 0 # The two selected clusters must map to different labels (not merged)
   
   out_k1_k2 <- all(! cl_phi[-which(cl %in% clusters)] %in% c(new_cl1, new_cl2)) # New individuals are not assigned to the new clusters after perturbation
   
-  in_k1 & in_k2 & out_k1_k2
+  in_k1 & in_k2 & distinct_k1_k2 & out_k1_k2
 }

@@ -44,14 +44,11 @@ test_that("preserve.cl returns FALSE when outside observations join a selected c
   expect_false(preserve.cl(cl, cl_phi, clusters = c(1, 2)))
 })
 
-# preserve.cl only requires that each group's observations stay together and
-# that no outside observations join them.  When clusters 1 and 2 both map to
-# label 4, every observation in each group is still grouped together (condition i)
-# and no outside observation joins label 4 (condition ii).  The function
-# therefore returns TRUE — it does not require the two selected groups to land
-# in different new labels.
-test_that("preserve.cl returns TRUE when both selected clusters merge into one label", {
+# Merging the two selected clusters into a single label does not preserve the
+# selection event: the original clustering identified clusters 1 and 2 as
+# distinct groups to compare, so they must map to different labels in cl_phi.
+test_that("preserve.cl returns FALSE when both selected clusters merge into one label", {
   cl     <- c(1, 1, 2, 2, 3, 3)
   cl_phi <- c(4, 4, 4, 4, 5, 5)   # clusters 1 and 2 merged into label 4
-  expect_true(preserve.cl(cl, cl_phi, clusters = c(1, 2)))
+  expect_false(preserve.cl(cl, cl_phi, clusters = c(1, 2)))
 })

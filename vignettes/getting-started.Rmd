@@ -39,7 +39,7 @@ At first sight, this looks like a standard two-sample testing problem. However, 
 <div style="border-left: 4px solid #e6a817; background-color: #fdf6e3; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
   <strong style="color: #b8860b;">&#9888; The double-dipping problem</strong><br/>
   The problem is often called **double dipping**: the same data are used twice, first to discover the clusters and then to test whether those clusters differ. If we ignore this selection step and apply a
-  classical test as if the clusters had been fixed in advance, the resulting $p$-values loose the type I error control. This happens because clustering algorithms are designed to find groups that look different.
+  classical test as if the clusters had been fixed in advance, the resulting $p$-values lose the type I error control. This happens because clustering algorithms are designed to find groups that look different.
   If we then test the difference between those same groups without accounting for the fact that they were selected to be different, we underestimate the amount of randomness involved.
 </div>
 

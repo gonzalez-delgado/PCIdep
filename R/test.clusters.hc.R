@@ -37,6 +37,14 @@
 #'   The number of leaves in \code{hcl} must equal \code{nrow(X)}; an error is raised otherwise.
 #'   Ignored (with a warning) when \code{sample_split = TRUE}, because sample splitting changes \code{X}
 #'   after the clustering would have been computed.
+#' @param dismat An optional precomputed squared Euclidean distance matrix of class \code{"dist"}, as returned by
+#'   \code{stats::dist(X, method = "euclidean")^2}. When supplied alongside \code{hcl}, both the distance matrix
+#'   and the dendrogram computations are skipped, which is useful when testing several cluster pairs from the same
+#'   clustering. When supplied without \code{hcl}, a warning is emitted and the dendrogram is computed from
+#'   \code{dismat}. When \code{hcl} is supplied without \code{dismat} and the linkage is not \code{"complete"},
+#'   a warning is emitted and \code{dismat} is recomputed internally. Ignored (with a warning) when
+#'   \code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance matrix would
+#'   have been computed.
 #' @param ndraws Integer. Number of Monte Carlo samples used to approximate the p-value when \code{linkage = "complete"}. Ignored otherwise.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
 #' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
@@ -71,7 +79,7 @@
 #'   membership of each observation in the partition with \code{NC} clusters.}
 #'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
 #'   by the user or estimated from \code{Y}.}
-#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering (i.e., the subsample of \code{X} used to estimate \code{Sigma}).}
+#'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix used for clustering and testing (i.e., the subsample of \code{X} retained after sample splitting).}
 #' }
 #'
 #' @examples
@@ -137,7 +145,7 @@
 #'
 #' @export
 
-test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, linkage = 'average', hcl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
+test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, linkage = 'average', hcl = NULL, dismat = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
   
   # --------------- Initial checks and pre-processing ---------------
 
@@ -166,10 +174,22 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     linkage <- inferred_linkage
   }
 
-  # Discard precomputed hcl when sample splitting, since X changes after the split
+  # Discard precomputed hcl and dismat when sample splitting, since X changes after the split
   if (!is.null(hcl) && sample_split) {
     warning("'hcl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
     hcl <- NULL
+  }
+  if (!is.null(dismat) && sample_split) {
+    warning("'dismat' is ignored when sample_split = TRUE because X is modified after splitting. The distance matrix will be recomputed on the subsample.")
+    dismat <- NULL
+  }
+
+  # Warn about incomplete precomputation: dismat without hcl, or hcl without dismat
+  if (!is.null(dismat) && is.null(hcl)) {
+    warning("'dismat' is provided but 'hcl' is not. The dendrogram will be computed from the provided 'dismat'. Pass 'hcl' as well to avoid recomputing it when testing multiple cluster pairs.")
+  }
+  if (!is.null(hcl) && is.null(dismat) && linkage != "complete") {
+    warning("'hcl' is provided but 'dismat' is not. The distance matrix will be recomputed internally. Pass 'dismat' as well to avoid recomputing it when testing multiple cluster pairs.")
   }
 
   # Check for correct clustering specification
@@ -193,12 +213,16 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # --------------- Cluster data ---------------
 
   if (is.null(hcl)) {
-    # No precomputed clustering: compute distance matrix and dendrogram
-    dismat <- stats::dist(X, method = "euclidean")^2
+    # No precomputed clustering: use or compute distance matrix and dendrogram
+    if (is.null(dismat)) {
+      dismat <- stats::dist(X, method = "euclidean")^2
+    }
     hcl <- fastcluster::hclust(dismat, method = linkage)
   } else if (linkage != "complete") {
     # Precomputed hcl provided; the exact-computation path still needs dismat
-    dismat <- stats::dist(X, method = "euclidean")^2
+    if (is.null(dismat)) {
+      dismat <- stats::dist(X, method = "euclidean")^2
+    }
   }
 
   # --------------- Test for the difference of cluster means ---------------
@@ -219,7 +243,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   V_g1g2_inv <- Matrix::solve(V_g1g2)
   stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv,diff_means))) # Test statistic (norm_V{diff_means})
   
-  if(!linkage == "complete"){ # Code adapted from clusterpval package (Gao et al. 2022)
+  if(linkage != "complete"){ # Code adapted from clusterpval package (Gao et al. 2022)
     
     # Computation of the truncation set for the 2-norm in Gao et al. 2022
     test_gao <- clusterpval::test_hier_clusters_exact(as.matrix(X), link = linkage, K = NC, k1 = clusters[1], k2 = clusters[2], hcl = hcl, dist = dismat)
@@ -287,7 +311,10 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       # Return nothing if nothing survives
       if(survives == 0) {
         warning("No samples that preserved the clusters were generated. Try re-running with a larger value of ndraws.")
-        return(list(pvalue = NA, stat = NA, stderr = NA))
+        return_list <- list(pvalue = NA, stat = NA, hcl = hcl_at_K, stderr = NA)
+        if(return_Sigma){return_list$Sigma <- Sigma}
+        if(return_X_clus & sample_split){return_list$X_clus <- X}
+        return(return_list)
       }
       
       #  Approximate p-values
