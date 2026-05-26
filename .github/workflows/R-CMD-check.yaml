@@ -68,9 +68,11 @@ jobs:
       - name: Install dependencies
         shell: Rscript {0}
         run: |
-          install.packages(c("remotes", "rcmdcheck"))
+          install.packages(c("remotes", "rcmdcheck", "knitr", "rmarkdown"))
           if (!requireNamespace("rcmdcheck", quietly = TRUE))
             stop("rcmdcheck failed to install — check CRAN mirror / binary availability")
+          if (!requireNamespace("rmarkdown", quietly = TRUE))
+            stop("rmarkdown failed to install — check CRAN mirror / binary availability")
           remotes::install_github("yiqunchen/KmeansInference", upgrade = "never")
           remotes::install_github("lucylgao/clusterpval", upgrade = "never")
           remotes::install_deps(dependencies = TRUE)
