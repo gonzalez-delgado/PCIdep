@@ -200,7 +200,7 @@ the dependence structure between observations $\mathbf{U}$ is known and belongs 
 
   where $\mathbf{1}_{n\times n}$ is the $n \times n$ matrix of ones. In the [PCIdep paper](https://arxiv.org/abs/2310.11822), we show that the testing
   procedure is <strong>robust to deviations from</strong> $\mathcal{CS}(n)$, so that the method can be applied in practice if the known matrix $\mathbf{U}$ does not
-  present substantial deviations from the compound symmetry class (e.g. for auto-regressive processes).
+  present substantial deviations from the compound symmetry class (e.g. for autoregressive processes).
 
   Note that the case of independent observations is trivially included in this setting, since the identity matrix belongs to $\mathcal{CS}(n)$.
 </div>
