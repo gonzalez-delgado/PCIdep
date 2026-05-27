@@ -11,6 +11,23 @@ The user can install `PCIdep` by running the following command:
 devtools::install_github("gonzalez-delgado/PCIdep")
 ```
 
+## On this website
+
+<div class="guide-cards">
+
+  <a class="guide-card" href="articles/">
+  <h3>📘 User guide</h3>
+  <p>Tutorials and examples to get started with `PCIdep`.</p>
+  </a>
+
+  <a class="guide-card" href="reference/">
+  <h3>🧩 API documentation</h3>
+  <p>Function reference and package documentation.</p>
+  </a>
+
+</div>
+
+
 <div class="citation-box">
 
 <div class="citation-title">Cite this work</div>

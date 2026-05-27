@@ -133,11 +133,13 @@ controlled at level \(\alpha\) if
 \leq \alpha,
 \]
 
-where $H_0$ is the null hypothesis of equality of clusters, that needs to be precised for a given data model.
+where $H_0^{\{C_1,C_2\}}$ is the null hypothesis of equality of clusters that needs to be specified for a given data model.
 
-# The statistical model
+# The `PCIdep` approach
 
-The `PCIdep` package is designed for post-clustering inference under a matrix normal model with possible dependence between observations and/or features:
+## The statistical model
+
+The `PCIdep` package is designed for post-clustering inference under a [matrix normal model](https://en.wikipedia.org/wiki/Matrix_normal_distribution) with possible dependence between observations and/or features:
 
 \[
 \mathbf{X} \sim \mathcal{MN}_{n \times p}(\boldsymbol{\mu}, \mathbf{U}, \boldsymbol{\Sigma}).
@@ -149,15 +151,80 @@ Here:
 - \(\mathbf{U} \in \mathbb{R}^{n \times n}\) describes dependence between observations;
 - \(\boldsymbol{\Sigma} \in \mathbb{R}^{p \times p}\) describes dependence between features.
 
-Equivalently,
+This means that:
+
+- Every row $X_i$ of $\mathbf{X}$ is distributed as $\mathcal{N}_p(\mu_i, U_{ii}\boldsymbol{\Sigma})$,
+- Every column $X^j$ of $\mathbf{X}$ is distributed as $\mathcal{N}_n(\mu^j, \Sigma_{jj}\mathbf{U})$,
+- The covariance between two entries $X_{ij}$ and $X_{i'j'}$ is given by $\mathrm{Cov}(X_{ij}, X_{i'j'}) = U_{ii'} \Sigma_{jj'}$,
+
+or, equivalently,
 
 \[
 \mathrm{vec}(\mathbf{X}) \sim \mathcal{N}_{np}\left(\mathrm{vec}(\boldsymbol{\mu}), \boldsymbol{\Sigma} \otimes \mathbf{U}\right).
 \]
 
-<div style="border-left: 4px solid #e74c3c; background-color: #fdf2f2; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
-  <strong style="color: #c0392b;">🚧 Work in progress</strong><br/>
-  This vignette is currently under construction and not yet complete. Content may be missing, incomplete, or subject to change.
+In this setting, independent observations correspond to $\mathbf{U} = \mathbf{I}_n$, while independent features correspond to $\boldsymbol{\Sigma} = \sigma^2\mathbf{I}_p$.
+
+<div style="border-left: 5px solid #8e44ad; background: linear-gradient(135deg, #f8f1fc 0%, #fcf8fe 100%); padding: 14px 16px; margin: 16px 0 18px 0; border-radius: 8px; box-shadow: 0 1px 4px rgba(142, 68, 173, 0.08);">
+  <strong style="color: #6c3483; font-size: 1.04em;">The null hypothesis</strong>
+
+  In this model, the equality of clusters $C_1$ and $C_2$ is expressed as the equality of cluster means, defined as $\bar{\mu}_{C} = \frac{1}{|C|} \sum_{i \in C} \mu_i$ for any cluster $C$.
+  This means that the null hypothesis is written as:
+
+  \[
+  H_0^{\{C_1,C_2\}}: \bar{\mu}_{C_1} = \bar{\mu}_{C_2}.
+  \]
 </div>
 
+## Model assumptions to compute a $p$-value
+
+### $\mathbf{U}$ must be known and compound symmetric
+
+In the [PCIdep paper](https://arxiv.org/abs/2310.11822), we show that a $p$-value for $H_0^{\{C_1,C_2\}}$ can be computed in closed form, provided that
+the dependence structure between observations $\mathbf{U}$ is known and belongs to the class of compound symmetry matrices.
+
+<div style="border-left: 4px solid #e6a817; background-color: #fdf6e3; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #b8860b;">&#9888; $\mathbf{U}$ must be compound symmetric</strong>
+
+  The class $\mathcal{CS}(n)$ of compound symmetry matrices of size $n$ is defined as:
+
+  \[
+  \mathcal{CS}(n)
+  = \left\{
+  (a-b)\mathbf{I}_n + b\mathbf{1}_{n\times n}
+  :
+  a \ge 0,
+  -\frac{a}{n-1} < b < a
+  \right\}.
+  \]
+
+  where $\mathbf{1}_{n\times n}$ is the $n \times n$ matrix of ones. In the [PCIdep paper](https://arxiv.org/abs/2310.11822), we show that the testing
+  procedure is <strong>robust to deviations from</strong> $\mathcal{CS}(n)$, so that the method can be applied in practice if the known matrix $\mathbf{U}$ does not
+  present substantial deviations from the compound symmetry class (e.g. for autoregressive processes).
+
+  Note that the case of independent observations is trivially included in this setting, since the identity matrix belongs to $\mathcal{CS}(n)$.
+</div>
+
+The closed form of the $p$-value when $\mathbf{U} \in \mathcal{CS}(n)$ is detailed in Section 2 of the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+
+### $\boldsymbol{\Sigma}$ can be unknown and arbitrary
+
+One of the main contributions of the `PCIdep` approach is that the dependence structure between features $\boldsymbol{\Sigma}$
+can be unknown and estimated in practice, while respecting the validity of the resulting $p$-value.
+
+<div style="border-left: 4px solid #27ae60; background-color: #eafaf1; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+  <strong style="color: #27ae60;">💡 In practice</strong><br/>
+  The functions in `PCIdep` automatically estimate $\boldsymbol{\Sigma}$. As statistical guarantees are respected <em>asymptotically</em>, 
+  the sample size $n$ should be sufficiently large for the resulting $p$-values to be valid.
+</div>
+
+Technical details on the estimation of $\boldsymbol{\Sigma}$ and the resulting asymptotic validity of the $p$-values are provided in Section 3 of the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+
+# `PCIdep` in practice
+
+This vignette introduced the statistical motivation of post-clustering inference, the matrix normal model used in `PCIdep`, 
+and the selective framework behind valid $p$-values after clustering. To see how to compute these $p$-values and use `PCIdep` in practice:
+
+- For hierarchical agglomerative clustering (HAC) and $k$-means, see [the HAC and $k$-means vignette](hac-km-clustering.Rmd).
+- For user-defined or custom clustering procedures, see [the custom clustering vignette](custom-clustering.Rmd).
 
