@@ -133,7 +133,7 @@ controlled at level \(\alpha\) if
 \leq \alpha,
 \]
 
-where $H_0^{\{C_1,C_2\}}$ is the null hypothesis of equality of clusters, that needs to be precised for a given data model.
+where $H_0^{\{C_1,C_2\}}$ is the null hypothesis of equality of clusters that needs to be specified for a given data model.
 
 # The `PCIdep` approach
 
