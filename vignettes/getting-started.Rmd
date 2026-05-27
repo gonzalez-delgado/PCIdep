@@ -225,6 +225,6 @@ Technical details on the estimation of $\boldsymbol{\Sigma}$ and the resulting a
 This vignette introduced the statistical motivation of post-clustering inference, the matrix normal model used in `PCIdep`, 
 and the selective framework behind valid $p$-values after clustering. To see how to compute these $p$-values and use `PCIdep` in practice:
 
-- For hierarchical agglomerative clustering (HAC) and $k$-means, see [the HAC and $k$-means vignette](hac-km-clustering.Rmd).
-- For user-defined or custom clustering procedures, see [the custom clustering vignette](custom-clustering.Rmd).
+- For hierarchical agglomerative clustering (HAC) and $k$-means, see [the HAC and $k$-means vignette](articles/hac-km-clustering.html).
+- For user-defined or custom clustering procedures, see [the custom clustering vignette](articles/custom-clustering.html).
 
