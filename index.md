@@ -11,7 +11,7 @@ The user can install `PCIdep` by running the following command:
 devtools::install_github("gonzalez-delgado/PCIdep")
 ```
 
-## In this website
+## On this website
 
 <div class="guide-cards">
 
