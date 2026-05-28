@@ -15,7 +15,7 @@ devtools::install_github("gonzalez-delgado/PCIdep")
 
 <div class="guide-cards">
 
-  <a class="guide-card" href="articles/">
+  <a class="guide-card" href="user-guide.html">
   <h3>📘 User guide</h3>
   <p>Tutorials and examples to get started with `PCIdep`.</p>
   </a>
