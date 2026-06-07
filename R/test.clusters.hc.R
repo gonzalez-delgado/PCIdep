@@ -284,9 +284,10 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
 
       cat('Clustering with complete linkage. Monte-Carlo approximation of the p-value.\n')
 
-      if (!is.numeric(ndraws) || length(ndraws) != 1 || ndraws <= 0) {
-        stop("'ndraws' must be a positive integer.")
+      if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0 || ndraws != as.integer(ndraws)) {
+        stop("'ndraws' must be a single positive integer.")
       }
+      ndraws <- as.integer(ndraws)
 
       # Monte-Carlo approximation of the p-value for complete linkage, without explicit computation of the truncation set.
       # Code adapted from clusterval package (Gao et al. 2022).
