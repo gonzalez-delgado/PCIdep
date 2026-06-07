@@ -62,6 +62,7 @@
 #'   \item{stat}{The observed test statistic.}
 #'   \item{km}{An integer vector of length \eqn{n} giving the cluster
 #'   membership of each observation returned by the k-means algorithm.}
+#'   \item{S}{The truncation set used to compute the p-value.}
 #'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in
 #'   the test, either provided by the user or estimated from \code{Y}.}
 #'   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix (subsample of \code{X}) used for clustering and testing.}
@@ -196,7 +197,7 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   I2 <- suppressWarnings(intervals::interval_intersection(I1, SV^2))
   pv <- clusterpval::TChisqRatioApprox(dim(Sigma)[1], I2, SV^2)
   
-  return_list <- list(pvalue = pv, stat = stat_V, km = km_labels)
+  return_list <- list(pvalue = pv, stat = stat_V, km = km_labels, S = SV)
   if(return_Sigma){return_list$Sigma <- Sigma}
   if(return_X_clus & sample_split){return_list$X_clus <- X}
   return(return_list)}

@@ -270,3 +270,92 @@ test_that("test.clusters.MC works with sample splitting", {
   expect_gte(res$pvalue, 0)
   expect_lte(res$pvalue, 1)
 })
+
+# ---- n_preserved correctness --------------------------------------------
+
+# Clusters with means at -100, +100, and 0 give stat_V ≈ 1000, which is far
+# larger than sd(phi) ≈ sqrt(5) ≈ 2.24.  All ndraws phi values are therefore
+# positive.  A threshold-based cl_fun that assigns labels purely by whether the
+# first feature is below -50, above +50, or in between is immune to the tiny
+# perturbations (at most ~0.3 units) induced by phi ≈ stat_V.  Consequently
+# preserve.cl() returns TRUE for all ndraws iterations, so n_preserved must
+# equal ndraws exactly.
+test_that("n_preserved equals ndraws when all phi > 0 and all perturbations preserve clusters", {
+  n <- 30; p <- 5
+  X <- rbind(
+    matrix(-100, nrow = 10, ncol = p),
+    matrix( 100, nrow = 10, ncol = p),
+    matrix(   0, nrow = 10, ncol = p)
+  )
+  U     <- diag(n)
+  Sigma <- diag(p)
+  cl    <- c(rep(1L, 10), rep(2L, 10), rep(3L, 10))
+
+  # Deterministic cl_fun: assigns labels by thresholding the first feature.
+  # The perturbations are ~0.1 * |phi - stat_V| << 50, so the label never changes.
+  cl_fun_thresh <- function(X, NC) {
+    ifelse(X[, 1] < -50, 1L, ifelse(X[, 1] > 50, 2L, 3L))
+  }
+
+  res <- suppressMessages(
+    test.clusters.MC(
+      X = X, U = U, Sigma = Sigma,
+      clusters = c(1L, 2L),
+      cl_fun = cl_fun_thresh,
+      NC = 3, cl = cl,
+      ndraws = 20,
+      sample_split = FALSE
+    )
+  )
+
+  expect_equal(res$n_preserved, 20L)
+})
+
+# A cl_fun that ignores the data entirely and always returns the same fixed
+# partition guarantees preserve.cl() is TRUE for every phi >= 0.  By setting
+# the same seed before the function call and before reproducing phi here, we
+# obtain the exact phi vector used internally and can compute the expected
+# n_preserved as sum(phi >= 0) without re-running the Monte Carlo loop.
+#
+# Note: with sample_split = FALSE and Sigma / cl supplied, setup.model()
+# consumes no random numbers, so stats::rnorm() inside the function draws from
+# the same state as the independently reproduced phi below.
+test_that("n_preserved equals sum(phi >= 0) when cl_fun always preserves clusters", {
+  n <- 30; p <- 5
+  set.seed(7)
+  X     <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  U     <- diag(n)
+  Sigma <- diag(p)
+  cl    <- c(rep(1L, 10), rep(2L, 10), rep(3L, 10))
+
+  # Data-invariant cl_fun: returns the same partition for any input matrix.
+  # preserve.cl(cl, cl_fun_fixed(Xphi), c(1,2)) is therefore always TRUE.
+  cl_fun_fixed <- function(X, NC) rep(seq_len(NC), each = nrow(X) %/% NC)
+
+  ndraws <- 50
+
+  set.seed(99)
+  res <- suppressMessages(
+    test.clusters.MC(
+      X = X, U = U, Sigma = Sigma,
+      clusters = c(1L, 2L),
+      cl_fun = cl_fun_fixed,
+      NC = 3, cl = cl,
+      ndraws = ndraws,
+      sample_split = FALSE
+    )
+  )
+
+  # Reproduce stat_V exactly as the function computes it:
+  #   norm2U_nu = 1/n1 + 1/n2 = 0.2  (U = I, n1 = n2 = 10)
+  #   V_g1g2    = 0.2 * Sigma = 0.2 * I_p
+  #   stat_V    = sqrt(diff_means %*% (5 * I_p) %*% t(diff_means))
+  diff_means_vec <- colMeans(X[1:10, ]) - colMeans(X[11:20, ])
+  stat_V_rep     <- sqrt(sum(diff_means_vec^2) / 0.2)
+  phi_sd         <- sqrt(sum(diag(Sigma)))   # sqrt(p) = sqrt(5)
+
+  set.seed(99)
+  phi_rep <- rnorm(ndraws, stat_V_rep, phi_sd)
+
+  expect_equal(res$n_preserved, sum(phi_rep >= 0))
+})

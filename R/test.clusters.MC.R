@@ -38,6 +38,9 @@
 #'   means.}
 #'   \item{stat}{The observed test statistic.}
 #'   \item{stderr}{Monte Carlo standard error of the estimated p-value.}
+#'   \item{n_preserved}{Number of Monte Carlo samples (out of \code{ndraws}) for which
+#'   \code{preserve.cl} returned \code{TRUE}, i.e., the perturbed clustering matched the
+#'   original cluster labels.}
 #'   \item{clusters}{An integer vector of length \eqn{n} giving the cluster
 #'   membership of each observation.}
 #'   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided
@@ -188,9 +191,9 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       
   Xphi <- X
   
-  log_survives <- unlist(future.apply::future_lapply(X = 1:ndraws, FUN = function(j) {
+  results_list <- future.apply::future_lapply(X = 1:ndraws, FUN = function(j) {
     
-    if(phi[j] < 0) return(NA)
+    if(phi[j] < 0) return(list(ls = NA, preserved = FALSE))
     
     # Compute perturbed data set for positive phi's
     Xphi <- X
@@ -204,12 +207,15 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     if(preserve.cl(cl, cl_Xphi, clusters)) {
       ls <- -(phi[j])^2/2 + (dim(Sigma)[1]-1)*log(phi[j]) - (dim(Sigma)[1]/2 - 1)*log(2) - lgamma(dim(Sigma)[1]/2) -
         stats::dnorm(phi[j], mean=stat_V, sd=sqrt(sum(Matrix::diag(Sigma))), log=TRUE)
-      return(ls)
+      return(list(ls = ls, preserved = TRUE))
     }
     
-    return(NA)
+    return(list(ls = NA, preserved = FALSE))
     
-  }, future.seed=TRUE))
+  }, future.seed=TRUE)
+  
+  log_survives <- unlist(lapply(results_list, `[[`, "ls"))
+  n_preserved <- sum(unlist(lapply(results_list, `[[`, "preserved")))
   
   # Trim down to only survives
   phi <- phi[!is.na(log_survives)]
@@ -220,7 +226,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # Return nothing if nothing survives
   if(survives == 0) {
     warning("No samples that preserved the clusters were generated. Try re-running with a larger value of ndraws.")
-    return_list <- list(stat = stat_V, pvalue = NA, stderr = NA, clusters = cl)
+    return_list <- list(stat = stat_V, pvalue = NA, stderr = NA, clusters = cl, n_preserved = n_preserved)
     if(return_Sigma){return_list$Sigma <- Sigma}
     if(return_X_clus & sample_split){return_list$X_clus <- X}
     return(return_list)
@@ -232,7 +238,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   pv <- sum(props[phi >= stat_V])
   var_pv <- (1 - pv)^2*sum(props[phi >= stat_V]^2) + pv^2*sum(props[phi < stat_V]^2)
   
-  return_list <- list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv), clusters=cl)
+  return_list <- list(pvalue = pv, stat = stat_V, stderr = sqrt(var_pv), clusters = cl, n_preserved = n_preserved)
   if(return_Sigma){return_list$Sigma <- Sigma}
   if(return_X_clus & sample_split){return_list$X_clus <- X}
 
