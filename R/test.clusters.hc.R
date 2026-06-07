@@ -322,8 +322,8 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
 
       }, future.seed=TRUE)
       
-      log_survives <- sapply(results_list, `[[`, "ls")
-      n_preserved <- sum(sapply(results_list, `[[`, "preserved"))
+      log_survives <- unlist(lapply(results_list, `[[`, "ls"))
+      n_preserved <- sum(unlist(lapply(results_list, `[[`, "preserved")))
       
       # Trim down to only survives
       phi <- phi[!is.na(log_survives)]

@@ -50,7 +50,7 @@ run_km <- function(d, clusters, ...) {
 
 # The return value must be a named list containing exactly pvalue, stat, km, and S
 # (plus optional elements when requested).
-test_that("test.clusters.km returns a list with pvalue, stat, and km", {
+test_that("test.clusters.km returns a list with pvalue, stat, km, and S", {
   d <- make_km_data()
   res <- suppressMessages(run_km(d, clusters = c(1, 3)))
   expect_named(res, c("pvalue", "stat", "km", "S"), ignore.order = TRUE)
