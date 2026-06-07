@@ -115,6 +115,10 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # --------------- Initial checks and pre-processing ---------------
 
+  if (!is.numeric(ndraws) || length(ndraws) != 1 || ndraws <= 0) {
+    stop("'ndraws' must be a positive integer.")
+  }
+
   # Check consistency between sample_split and return_X_clus
   if(!sample_split & return_X_clus){
     warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
@@ -191,7 +195,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       
   Xphi <- X
   
-  results_list <- future.apply::future_lapply(X = 1:ndraws, FUN = function(j) {
+  results_list <- future.apply::future_lapply(X = seq_len(ndraws), FUN = function(j) {
     
     if(phi[j] < 0) return(list(ls = NA, preserved = FALSE))
     
