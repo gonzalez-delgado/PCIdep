@@ -115,9 +115,10 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # --------------- Initial checks and pre-processing ---------------
 
-  if (!is.numeric(ndraws) || length(ndraws) != 1 || ndraws <= 0) {
-    stop("'ndraws' must be a positive integer.")
+  if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0 || ndraws != as.integer(ndraws)) {
+    stop("'ndraws' must be a single positive integer.")
   }
+  ndraws <- as.integer(ndraws)
 
   # Check consistency between sample_split and return_X_clus
   if(!sample_split & return_X_clus){
