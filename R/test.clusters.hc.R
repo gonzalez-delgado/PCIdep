@@ -281,9 +281,14 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     if(return_X_clus & sample_split){return_list$X_clus <- X}
 
     return(return_list)}else{ # Complete linkage
-      
+
       cat('Clustering with complete linkage. Monte-Carlo approximation of the p-value.\n')
-      
+
+      if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0 || ndraws != as.integer(ndraws)) {
+        stop("'ndraws' must be a single positive integer.")
+      }
+      ndraws <- as.integer(ndraws)
+
       # Monte-Carlo approximation of the p-value for complete linkage, without explicit computation of the truncation set.
       # Code adapted from clusterval package (Gao et al. 2022).
       
@@ -298,7 +303,7 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       
       Xphi <- X
 
-      results_list <- future.apply::future_lapply(X = 1:ndraws, FUN = function(j) {
+      results_list <- future.apply::future_lapply(X = seq_len(ndraws), FUN = function(j) {
 
         if(phi[j] < 0) return(list(ls = NA, preserved = FALSE))
 
