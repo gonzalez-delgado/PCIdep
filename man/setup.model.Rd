@@ -58,6 +58,7 @@ print(setup_result)
 }
 \seealso{
 Other Utilities: 
+\code{\link{ARI}()},
 \code{\link{is.CS}()},
 \code{\link{preserve.cl}()}
 }

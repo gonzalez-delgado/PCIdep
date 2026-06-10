@@ -38,6 +38,13 @@ test_that("ARI is close to 0 for two independent random partitions", {
   expect_lt(abs(ARI(cl1, cl2)), 0.05)
 })
 
+# Degenerate case: singleton partition vs single-cluster partition should yield ARI = 0.
+test_that("ARI returns 0 for singleton vs single-cluster partition", {
+  cl1 <- 1:6
+  cl2 <- rep(1, 6)
+  expect_equal(ARI(cl1, cl2), 0)
+})
+
 # Hand-computed reference case.
 # cl1 = (1,1,1,2,2,2), cl2 = (1,1,2,2,3,3)
 # Contingency table:
@@ -62,4 +69,10 @@ test_that("ARI matches hand-computed reference value", {
 # Mismatched lengths must raise an error.
 test_that("ARI raises an error when inputs have different lengths", {
   expect_error(ARI(c(1, 2, 3), c(1, 2)), "same length")
+})
+
+# Trivial inputs of length 0 or 1 must return 1 without errors or NaN.
+test_that("ARI returns 1 for inputs of length < 2", {
+  expect_equal(ARI(integer(0), integer(0)), 1)
+  expect_equal(ARI(1L, 1L), 1)
 })

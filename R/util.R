@@ -265,6 +265,7 @@ ARI <- function(cl1, cl2) {
   # Contingency table of pair counts
   tab <- table(cl1, cl2)
   n   <- length(cl1)
+  if (n < 2) return(1)
 
   # Choose-2 helper
   c2 <- function(x) x * (x - 1) / 2

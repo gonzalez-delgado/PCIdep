@@ -43,6 +43,7 @@ reference:
       - setup.model
       - is.CS
       - preserve.cl
+      - ARI
 
 articles:
   - title: User guide

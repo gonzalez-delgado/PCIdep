@@ -88,6 +88,11 @@ A named list with the following components:
   \item{stat}{The observed test statistic.}
   \item{stderr}{Monte Carlo standard error of the estimated p-value when
   \code{linkage = "complete"}. This component is omitted otherwise.}
+  \item{n_preserved}{Number of Monte Carlo samples (out of \code{ndraws}) for which
+  \code{preserve.cl} returned \code{TRUE}, i.e., the perturbed clustering matched the
+  original cluster labels. Only present when \code{linkage = "complete"}.}
+  \item{S}{The truncation set used to compute the p-value when
+  \code{linkage != "complete"}. This component is omitted otherwise.}
   \item{hcl}{An integer vector of length \eqn{n} giving the cluster
   membership of each observation in the partition with \code{NC} clusters.}
   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in the test, either provided

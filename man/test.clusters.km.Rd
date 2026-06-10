@@ -74,6 +74,7 @@ A named list with the following components:
   \item{stat}{The observed test statistic.}
   \item{km}{An integer vector of length \eqn{n} giving the cluster
   membership of each observation returned by the k-means algorithm.}
+  \item{S}{The truncation set used to compute the p-value.}
   \item{Sigma}{If return_Sigma = TRUE, the column covariance matrix used in
   the test, either provided by the user or estimated from \code{Y}.}
   \item{X_clus}{If return_X_clus = TRUE and sample_split = TRUE, the data matrix (subsample of \code{X}) used for clustering and testing.}
