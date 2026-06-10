@@ -226,3 +226,59 @@ preserve.cl <- function(cl, cl_phi, clusters) {
   
   in_k1 & in_k2 & distinct_k1_k2 & out_k1_k2
 }
+
+#' @title Adjusted Rand Index
+#' @family Utilities
+#' @description
+#' Computes the Adjusted Rand Index (ARI) between two cluster assignment
+#' vectors. The ARI measures the similarity between two partitions, corrected
+#' for chance. It equals 1 for identical partitions and has an expected value
+#' of 0 for independent (random) partitions.
+#'
+#' @param cl1 Integer (or factor) vector of length \eqn{n} giving the first
+#'   cluster assignment.
+#' @param cl2 Integer (or factor) vector of length \eqn{n} giving the second
+#'   cluster assignment.
+#'
+#' @return A numeric scalar in \eqn{(-1, 1]} giving the Adjusted Rand Index.
+#'
+#' @examples
+#' # Perfect agreement
+#' cl1 <- c(1, 1, 2, 2, 3, 3)
+#' cl2 <- c(2, 2, 1, 1, 3, 3)  # same partition, different labels
+#' ARI(cl1, cl2)  # should be 1
+#'
+#' # Random agreement
+#' set.seed(1)
+#' cl1 <- sample(1:3, 100, replace = TRUE)
+#' cl2 <- sample(1:3, 100, replace = TRUE)
+#' ARI(cl1, cl2)  # close to 0
+#'
+#' @export
+
+ARI <- function(cl1, cl2) {
+
+  if (length(cl1) != length(cl2)) {
+    stop("cl1 and cl2 must have the same length.")
+  }
+
+  # Contingency table of pair counts
+  tab <- table(cl1, cl2)
+  n   <- length(cl1)
+
+  # Choose-2 helper
+  c2 <- function(x) x * (x - 1) / 2
+
+  sum_comb_cells <- sum(c2(tab)) # sum_ij C(n_ij, 2)
+  sum_comb_rows <- sum(c2(rowSums(tab))) # sum_i  C(a_i,  2)
+  sum_comb_cols <- sum(c2(colSums(tab))) # sum_j  C(b_j,  2)
+  total_comb <- c2(n) # C(n, 2)
+
+  expected <- sum_comb_rows * sum_comb_cols / total_comb
+  numerator   <- sum_comb_cells - expected
+  denominator <- 0.5 * (sum_comb_rows + sum_comb_cols) - expected
+
+  if (denominator == 0) return(1)  # identical or trivially degenerate partitions
+  numerator / denominator
+}
+
