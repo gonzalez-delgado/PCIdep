@@ -72,8 +72,23 @@ jobs:
             stop("rcmdcheck failed to install — check CRAN mirror / binary availability")
           if (!requireNamespace("rmarkdown", quietly = TRUE))
             stop("rmarkdown failed to install — check CRAN mirror / binary availability")
-          remotes::install_github("yiqunchen/KmeansInference", upgrade = "never")
-          remotes::install_github("lucylgao/clusterpval", upgrade = "never")
+          # Wrap GitHub installs in a retry loop: the Windows runner occasionally
+          # receives an empty response from the GitHub API (JSON EOF error) on the
+          # first attempt due to transient rate-limiting or network hiccups.
+          install_github_retry <- function(repo, ..., attempts = 3L) {
+            for (i in seq_len(attempts)) {
+              tryCatch({
+                remotes::install_github(repo, upgrade = "never", ...)
+                return(invisible(NULL))
+              }, error = function(e) {
+                if (i == attempts) stop(e)
+                message("install_github('", repo, "') failed (attempt ", i, "/", attempts, "): ", conditionMessage(e), "\nRetrying...")
+                Sys.sleep(5)
+              })
+            }
+          }
+          install_github_retry("yiqunchen/KmeansInference")
+          install_github_retry("lucylgao/clusterpval")
           remotes::install_deps(dependencies = TRUE)
 
       - name: Check package
