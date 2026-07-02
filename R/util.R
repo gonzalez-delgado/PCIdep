@@ -262,6 +262,10 @@ ARI <- function(cl1, cl2) {
     stop("cl1 and cl2 must have the same length.")
   }
 
+  if (anyNA(cl1) || anyNA(cl2)) {
+    stop("cl1 and cl2 must not contain NA values.")
+  }
+
   # Contingency table of pair counts
   tab <- table(cl1, cl2)
   n   <- length(cl1)
