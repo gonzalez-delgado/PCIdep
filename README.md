@@ -1,5 +1,7 @@
 # PCIdep: Post-Clustering Inference under DEPendence
 
+[![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/gonzalez-delgado/PCIdep/)](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/gonzalez-delgado/PCIdep)
+
 $\texttt{PCIdep}$ is an $\texttt{R}$ package implementing the approaches introduced in [González-Delgado _et al._ (2023)](http://arxiv.org/abs/2310.11822) to perform selective inference after clustering when the observations are drawn from a general matrix normal model:
 
 $$
