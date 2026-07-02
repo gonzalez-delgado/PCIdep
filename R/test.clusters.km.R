@@ -166,7 +166,7 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # K-means clustering from KmeansInference package
   if(is.null(km_at_cl)){
-    seeds_to_try <- c(NULL, 1L:10L)
+    seeds_to_try <- c(list(NULL), as.list(1L:10L))
     for(s in seeds_to_try){
       km_at_cl <- tryCatch(
         KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = s, sig = 1, tol_eps = tol, iter.max = itermax),
