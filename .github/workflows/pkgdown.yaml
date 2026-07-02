@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pkgdown:
+  build:
     runs-on: ubuntu-latest
 
     env:
@@ -46,6 +46,15 @@ jobs:
         with:
           path: docs
 
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
-        if: github.event_name != 'pull_request'
+        id: deployment
         uses: actions/deploy-pages@v4
