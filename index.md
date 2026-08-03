@@ -49,7 +49,7 @@ R package version 0.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" ta
 <summary>BibTeX</summary>
 
 ```bibtex
-@article{GonzalezDelgado2023PCIdep,
+@article{GonzalezDelgado2026PCIdep,
   author  = {González-Delgado, Javier and Deronzier, Mathis and Cortés, Juan and Neuvial, Pierre},
   title   = {Post-clustering Inference under Dependence},
   journal = {Journal of the American Statistical Association},
