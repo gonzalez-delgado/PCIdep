@@ -141,9 +141,9 @@ Chen, Y. T., and Witten, D. M. (2023).
 Selective inference for k-means clustering.
 \emph{Journal of Machine Learning Research}, 24(152), 1-41.
 
-González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2023)
+González-Delgado, J., Deronzier, M., Cortés, J., and Neuvial, P. (2026)
 Post-clustering Inference under Dependence. 
-\emph{arXiv.2310.11822}.
+\emph{Journal of the American Statistical Association}. \doi{10.1080/01621459.2026.2707221}.
 }
 \seealso{
 Other post-clustering inference functions: 

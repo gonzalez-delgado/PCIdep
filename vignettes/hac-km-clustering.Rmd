@@ -226,10 +226,10 @@ km_test_12$pvalue
 <div style="border-left: 4px solid #27ae60; background-color: #eafaf1; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
   <strong style="color: #27ae60;">💡 Statistical power of `test.clusters.km()`</strong><br/>
   Post-clustering inference with $k$-means is generally _less powerful_ than with HAC or other clustering algorithms. This is due to how the $k$-means $p$-value has been defined. The $k$-means p-value in `PCIdep` is an extension of that proposed by [Chen and Witten](https://www.jmlr.org/papers/v24/22-0371.html), originally implemented for independent observations and features in the R package [`KMeansInference`](https://github.com/yiqunchen/KmeansInference). 
-  The analytical tractability of this $p$-value requires conditioning on more information than in the HAC case, which comes at a price in conditional power. We refer the reader to [Chen and Witten (2023)](https://www.jmlr.org/papers/v24/22-0371.html) for a detailed discussion, or to the power analyses presented in the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+  The analytical tractability of this $p$-value requires conditioning on more information than in the HAC case, which comes at a price in conditional power. We refer the reader to [Chen and Witten (2023)](https://www.jmlr.org/papers/v24/22-0371.html) for a detailed discussion, or to the power analyses presented in the [PCIdep paper](https://doi.org/10.1080/01621459.2026.2707221).
 </div>
 
 ## Summary
 
 In this vignette, we demonstrated how to perform post-clustering inference using the `test.clusters.hc()` and `test.clusters.km()` functions from the `PCIdep` package. 
-For more details on the methods and assumptions underlying these functions, please refer to the package documentation and the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+For more details on the methods and assumptions underlying these functions, please refer to the package documentation and the [PCIdep paper](https://doi.org/10.1080/01621459.2026.2707221).

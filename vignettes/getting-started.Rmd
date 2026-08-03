@@ -180,7 +180,7 @@ In this setting, independent observations correspond to $\mathbf{U} = \mathbf{I}
 
 ### $\mathbf{U}$ must be known and compound symmetric
 
-In the [PCIdep paper](https://arxiv.org/abs/2310.11822), we show that a $p$-value for $H_0^{\{C_1,C_2\}}$ can be computed in closed form, provided that
+In the [PCIdep paper](https://doi.org/10.1080/01621459.2026.2707221), we show that a $p$-value for $H_0^{\{C_1,C_2\}}$ can be computed in closed form, provided that
 the dependence structure between observations $\mathbf{U}$ is known and belongs to the class of compound symmetry matrices.
 
 <div style="border-left: 4px solid #e6a817; background-color: #fdf6e3; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
@@ -198,14 +198,14 @@ the dependence structure between observations $\mathbf{U}$ is known and belongs 
   \right\}.
   \]
 
-  where $\mathbf{1}_{n\times n}$ is the $n \times n$ matrix of ones. In the [PCIdep paper](https://arxiv.org/abs/2310.11822), we show that the testing
+  where $\mathbf{1}_{n\times n}$ is the $n \times n$ matrix of ones. In the [PCIdep paper](https://doi.org/10.1080/01621459.2026.2707221), we show that the testing
   procedure is <strong>robust to deviations from</strong> $\mathcal{CS}(n)$, so that the method can be applied in practice if the known matrix $\mathbf{U}$ does not
   present substantial deviations from the compound symmetry class (e.g. for autoregressive processes).
 
   Note that the case of independent observations is trivially included in this setting, since the identity matrix belongs to $\mathcal{CS}(n)$.
 </div>
 
-The closed form of the $p$-value when $\mathbf{U} \in \mathcal{CS}(n)$ is detailed in Section 2 of the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+The closed form of the $p$-value when $\mathbf{U} \in \mathcal{CS}(n)$ is detailed in Section 2 of the [PCIdep paper](https://doi.org/10.1080/01621459.2026.2707221).
 
 ### $\boldsymbol{\Sigma}$ can be unknown and arbitrary
 
@@ -218,7 +218,7 @@ can be unknown and estimated in practice, while respecting the validity of the r
   the sample size $n$ should be sufficiently large for the resulting $p$-values to be valid.
 </div>
 
-Technical details on the estimation of $\boldsymbol{\Sigma}$ and the resulting asymptotic validity of the $p$-values are provided in Section 3 of the [PCIdep paper](https://arxiv.org/abs/2310.11822).
+Technical details on the estimation of $\boldsymbol{\Sigma}$ and the resulting asymptotic validity of the $p$-values are provided in Section 3 of the [PCIdep paper](https://doi.org/10.1080/01621459.2026.2707221).
 
 # `PCIdep` in practice
 
