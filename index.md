@@ -37,7 +37,7 @@ If you use `PCIdep`, please cite:
 ### The paper
 
 González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P.  
-*Post-clustering Inference under Dependence*. <a href="https://doi.org/10.48550/arXiv.2310.11822" target="_blank">Link to paper</a>
+*Post-clustering Inference under Dependence*. <a href="https://doi.org/10.1080/01621459.2026.2707221" target="_blank">Link to paper</a>
 
 ### The R package
 
@@ -52,10 +52,11 @@ R package version 0.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" ta
 @article{GonzalezDelgado2023PCIdep,
   author  = {González-Delgado, Javier and Deronzier, Mathis and Cortés, Juan and Neuvial, Pierre},
   title   = {Post-clustering Inference under Dependence},
-  journal = {arXiv},
-  year    = {2023},
-  note    = {Preprint},
-  url     = {https://doi.org/10.48550/arXiv.2310.11822}
+  journal = {Journal of the American Statistical Association},
+  pages = {1--25},
+  year = {2026},
+  publisher = {Taylor \& Francis},
+  doi = {10.1080/01621459.2026.2707221},
 }
 
 @Manual{PCIdep2026,
