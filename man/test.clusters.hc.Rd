@@ -184,9 +184,9 @@ Gao, L. L., Bien, J., and Witten, D. (2022).
 Selective inference for hierarchical clustering.
 \emph{Journal of the American Statistical Association}, 117(540), 2533--2547.
 
-González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2023)
+González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2026)
 Post-clustering Inference under Dependence. 
-\emph{arXiv.2310.11822}.
+\emph{Journal of the American Statistical Association}. \doi{10.1080/01621459.2026.2707221}.
 }
 \seealso{
 Other post-clustering inference functions: 
