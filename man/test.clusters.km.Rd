@@ -19,7 +19,8 @@ test.clusters.km(
   sample_split = FALSE,
   nY = NULL,
   return_Sigma = FALSE,
-  return_X_clus = FALSE
+  return_X_clus = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -65,6 +66,8 @@ sample splitting changes \code{X} after the clustering would have been computed.
 \item{return_Sigma}{Logical. Whether to include in the returned list the column covariance matrix \code{Sigma} used in the test. When \code{return_Sigma = TRUE}, the returned matrix is included whether \code{Sigma} was provided by the user or estimated internally. Default is \code{FALSE}.}
 
 \item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
+
+\item{verbose}{Logical. Whether to print informational messages about the setup steps. Warnings are always shown regardless of this argument. Default is \code{TRUE}.}
 }
 \value{
 A named list with the following components:
