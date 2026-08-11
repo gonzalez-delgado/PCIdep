@@ -86,12 +86,10 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
 
         }
 
-        # ----------- Check that user-provided Y has at least as many rows as columns -----------
-
-        if(dim(Y)[1] < dim(Y)[2]){
-
-          stop('Y must have at least as many rows as columns (nrow(Y) >= ncol(Y)) to allow estimation of Sigma.')}
-
+        # ----------- Check that user-provided Y has strictly more rows than columns -----------
+        if (is.null(dim(Y)) || nrow(Y) <= ncol(Y)) {
+          stop('Y must have strictly more rows than columns (nrow(Y) > ncol(Y)) to allow estimation of Sigma.')
+        }
       }}
 
     # ----------- Check that Y and X have compatible dimensions ----------- 
