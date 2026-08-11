@@ -13,14 +13,15 @@ test.clusters.hc(
   precUY = NULL,
   NC,
   clusters,
-  linkage = "average",
+  linkage = "ward.D",
   hcl = NULL,
   ndraws = 2000,
   sample_split = FALSE,
   nY = NULL,
   return_Sigma = FALSE,
   return_X_clus = FALSE,
-  dismat = NULL
+  dismat = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -79,6 +80,8 @@ clustering. When supplied without \code{hcl}, a warning is emitted and the dendr
 a warning is emitted and \code{dismat} is recomputed internally. Ignored (with a warning) when
 \code{sample_split = TRUE}, because sample splitting changes \code{X} after the distance object would
 have been computed.}
+
+\item{verbose}{Logical. Whether to print informational messages about the setup and clustering steps. Warnings are always shown regardless of this argument. Default is \code{TRUE}.}
 }
 \value{
 A named list with the following components:

@@ -19,7 +19,8 @@ test.clusters.MC(
   sample_split = FALSE,
   nY = NULL,
   return_Sigma = FALSE,
-  return_X_clus = FALSE
+  return_X_clus = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ clusters automatically, this argument should be set to \code{NULL}.}
 \item{return_Sigma}{Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.}
 
 \item{return_X_clus}{Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.}
+
+\item{verbose}{Logical. Whether to print informational messages about the setup steps. Warnings are always shown regardless of this argument. Default is \code{TRUE}.}
 }
 \value{
 A named list with the following components:

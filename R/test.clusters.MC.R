@@ -30,6 +30,7 @@
 #' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Must be strictly greater than \code{ncol(X)}. Ignored when \code{Sigma} is provided by the user.
 #' @param return_Sigma Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.
 #' @param return_X_clus Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.
+#' @param verbose Logical. Whether to print informational messages about the setup steps. Warnings are always shown regardless of this argument. Default is \code{TRUE}.
 #'
 #' @return
 #' A named list with the following components:
@@ -111,7 +112,7 @@
 #'
 #' @export
 
-test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE){
+test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, clusters, cl_fun, NC = NULL, cl = NULL, ndraws = 2000, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE, verbose = TRUE){
   
   # --------------- Initial checks and pre-processing ---------------
 
@@ -130,7 +131,7 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   }
 
   # Set up data and dependency structures, estimate Sigma if needed
-  setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY)
+  setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY, verbose = verbose)
   X <- setup_model$X
   U <- setup_model$U
   Sigma <- setup_model$Sigma
