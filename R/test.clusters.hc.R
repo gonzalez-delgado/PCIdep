@@ -17,7 +17,7 @@
 #' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns of \code{X}. If \code{NULL},
 #'   \code{Sigma} is over-estimated from an auxiliary independent sample \code{Y} (in the sense of the Loewner partial order).
 #' @param Y If \code{Sigma} is \code{NULL}, an independent copy of \code{X} used to estimate \code{Sigma}. It must have the same number of columns as
-#'   \code{X}, and \code{nrow(Y)} must be greater than or equal to \code{ncol(Y)}.
+#'   \code{X}, and \code{nrow(Y)} must be strictly greater than \code{ncol(Y)}.
 #' @param UY If \code{Sigma} is \code{NULL}, an \eqn{n_Y \times n_Y} positive-definite matrix describing the dependence structure between the
 #'   rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity matrix is used by default.
 #' @param precUY The inverse of \code{UY}. Supplying \code{precUY} may improve computational efficiency. If \code{UY} is provided but \code{precUY} is
