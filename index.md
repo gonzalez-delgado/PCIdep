@@ -37,7 +37,7 @@ If you use `PCIdep`, please cite:
 ### The paper
 
 González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P.  
-*Post-clustering Inference under Dependence*. <a href="https://doi.org/10.1080/01621459.2026.2707221" target="_blank">Link to paper</a>
+*Post-clustering Inference under Dependence*. Journal of the American Statistical Association, 2026. <a href="https://doi.org/10.1080/01621459.2026.2707221" target="_blank">Link to paper</a>
 
 ### The R package
 

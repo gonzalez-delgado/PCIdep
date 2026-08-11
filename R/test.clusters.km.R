@@ -13,7 +13,7 @@
 #' @param Sigma A \eqn{p \times p} positive-definite matrix describing the dependence structure between the columns of \code{X}. If \code{NULL},
 #'   \code{Sigma} is over-estimated from an auxiliary independent sample \code{Y} (in the sense of the Loewner partial order).
 #' @param Y If \code{Sigma} is \code{NULL}, an independent copy of \code{X} used to estimate \code{Sigma}. It must have the same number of columns as
-#'   \code{X}.
+#'   \code{X}, and \code{nrow(Y)} must be greater than or equal to \code{ncol(Y)}.
 #' @param UY If \code{Sigma} is \code{NULL}, an \eqn{n_Y \times n_Y} positive-definite matrix describing the dependence structure between the
 #'   rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity matrix is used by default.
 #' @param precUY The inverse of \code{UY}. Providing \code{precUY} may improve computational efficiency. If \code{UY} is provided but \code{precUY} is
@@ -32,7 +32,7 @@
 #'   Ignored (with a warning) when \code{sample_split = TRUE}, because
 #'   sample splitting changes \code{X} after the clustering would have been computed.
 #' @param sample_split Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.
-#' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.
+#' @param nY Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Must be strictly greater than \code{ncol(X)}. Ignored when \code{Sigma} is provided by the user.
 #' @param return_Sigma Logical. Whether to include in the returned list the column covariance matrix \code{Sigma} used in the test. When \code{return_Sigma = TRUE}, the returned matrix is included whether \code{Sigma} was provided by the user or estimated internally. Default is \code{FALSE}.
 #' @param return_X_clus Logical. If sample splitting is performed to estimate \code{Sigma}, whether to include the data matrix used for clustering in the returned list. Ignored when \code{sample_split = FALSE} (as the same data matrix is used for clustering and testing). If further analysis of the retrieved clusters is desired, we recommend setting \code{return_X_clus = TRUE} when \code{sample_split = TRUE} to avoid confusion. Default is \code{FALSE}.
 #'
@@ -105,7 +105,7 @@
 #' 
 #' González-Delgado, J., Deronzier, M., Cortés, J., and Neuvial, P. (2026)
 #' Post-clustering Inference under Dependence. 
-#' \emph{Journal of the American Statistical Association}. \doi{10.1080/01621459.2026.2707221}.
+#' \emph{Journal of the American Statistical Association}.
 #'
 #' @export
 

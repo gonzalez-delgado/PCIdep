@@ -32,7 +32,7 @@ observations are assumed to be independent and \code{U} is set to the identity m
 \code{Sigma} is over-estimated from an auxiliary independent sample \code{Y} (in the sense of the Loewner partial order).}
 
 \item{Y}{If \code{Sigma} is \code{NULL}, an independent copy of \code{X} used to estimate \code{Sigma}. It must have the same number of columns as
-\code{X}.}
+\code{X}, and \code{nrow(Y)} must be greater than or equal to \code{ncol(Y)}.}
 
 \item{UY}{If \code{Sigma} is \code{NULL}, an \eqn{n_Y \times n_Y} positive-definite matrix describing the dependence structure between the
 rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity matrix is used by default.}
@@ -53,7 +53,7 @@ clusters automatically, this argument should be set to \code{NULL}.}
 
 \item{sample_split}{Logical. Whether to use sample splitting to estimate \code{Sigma} when \code{Sigma = NULL}. Ignored when \code{Sigma} is provided by the user.}
 
-\item{nY}{Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Ignored when \code{Sigma} is provided by the user.}
+\item{nY}{Integer. If \code{Y} is not provided and \code{sample_split = TRUE}, the number of rows of the auxiliary sample \code{Y} used to estimate \code{Sigma}. If \code{nY} is \code{NULL}, half of the rows of \code{X} are used for estimation. Must be strictly greater than \code{ncol(X)}. Ignored when \code{Sigma} is provided by the user.}
 
 \item{return_Sigma}{Logical. Whether to include the column covariance matrix used in the test in the returned list. Ignored when \code{Sigma} is provided by the user. Default is \code{FALSE}.}
 
@@ -145,7 +145,7 @@ Selective inference for hierarchical clustering.
 
 González-Delgado, J., Deronzier, M., Cortés, J., and Neuvial, P. (2026)
 Post-clustering Inference under Dependence. 
-\emph{Journal of the American Statistical Association}. \doi{10.1080/01621459.2026.2707221}.
+\emph{Journal of the American Statistical Association}.
 }
 \seealso{
 Other post-clustering inference functions: 
