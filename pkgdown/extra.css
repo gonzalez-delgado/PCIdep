@@ -1,3 +1,20 @@
+/* Navbar logo */
+.navbar-logo {
+  height: 32px;
+  width: auto;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Show the package logo only on the home page */
+.container:not(.template-home) img.logo {
+  display: none;
+}
+
+body:not(:has(.container.template-home)) .navbar-brand img.navbar-logo {
+  display: none;
+}
+
 /* Section spacing */
 .sidebar-section {
   margin-bottom: 2rem;
