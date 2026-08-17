@@ -31,10 +31,33 @@ jobs:
         with:
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
+      # Installs pkgdown, the package itself, and its GitHub remotes.
+      # We avoid r-lib/actions/setup-r-dependencies (pak) because pak's
+      # lockfile_create() calls the GitHub REST API directly and can fail
+      # with a transient error (e.g. HTTP 503) when resolving GitHub
+      # remotes. 'remotes' authenticates via GITHUB_PAT and is more
+      # resilient. See .github/workflows/R-CMD-check.yaml for the same
+      # workaround.
+      - name: Install dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages(c("remotes", "pkgdown"))
+          install_github_retry <- function(repo, ..., attempts = 3L) {
+            for (i in seq_len(attempts)) {
+              tryCatch({
+                remotes::install_github(repo, upgrade = "never", ...)
+                return(invisible(NULL))
+              }, error = function(e) {
+                if (i == attempts) stop(e)
+                message("install_github('", repo, "') failed (attempt ", i, "/", attempts, "): ", conditionMessage(e), "\nRetrying...")
+                Sys.sleep(5)
+              })
+            }
+          }
+          install_github_retry("yiqunchen/KmeansInference")
+          install_github_retry("lucylgao/clusterpval")
+          remotes::install_deps(dependencies = TRUE)
+          remotes::install_local(upgrade = "never")
 
       - name: Build site
         shell: Rscript {0}
