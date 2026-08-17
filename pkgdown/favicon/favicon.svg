@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 300 346" width="300" height="346" role="img" aria-label="PCIdep logo" id="svg26" sodipodi:docname="logo.svg" inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>RealFaviconGenerator</dc:creator><dc:source>https://realfavicongenerator.net</dc:source></rdf:Description></rdf:RDF></metadata><sodipodi:namedview id="namedview28" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageshadow="2" inkscape:pageopacity="0.0" inkscape:pagecheckerboard="0" showgrid="false" inkscape:zoom="1.4352152" inkscape:cx="111.82992" inkscape:cy="136.21651" inkscape:window-width="1846" inkscape:window-height="1136" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="svg26"></sodipodi:namedview><title id="title2">PCIdep</title><defs id="defs10">
+    <clipPath id="hexClip">
+      <polygon points="150,3 297,88 297,258 150,343 3,258 3,88" id="polygon4"></polygon>
+    </clipPath>
+    <filter id="fuzzy" x="-0.10612246" y="-0.091764706" width="1.2122449" height="1.1835294">
+      <feGaussianBlur stdDeviation="13" id="feGaussianBlur7"></feGaussianBlur>
+    </filter>
+  </defs><polygon points="150,3 297,88 297,258 150,343 3,258 3,88" fill="#F4EFE3" id="polygon12"></polygon><g clip-path="url(#hexClip)" id="g20">
+    <g filter="url(#fuzzy)" id="g18">
+      <polygon points="175,260 160,300 150,343 3,258 3,88 150,3 175,50 185,95 160,140 140,180 155,220 " fill="#A85F22" id="polygon14" style="fill:#22a4a8;fill-opacity:1" transform="matrix(0.95848323,0,0,1,0.1245503,0)"></polygon>
+      <polygon points="155,220 140,180 160,140 185,95 175,50 150,3 297,88 297,258 150,343 160,300 175,260 " fill="#5B4E9E" id="polygon16" style="fill:#bf6249;fill-opacity:1" transform="matrix(1.0362279,0,0,1,-10.759703,0)"></polygon>
+    </g>
+  </g><polygon points="150,3 297,88 297,258 150,343 3,258 3,88" fill="none" stroke="#F4EFE3" stroke-width="3" id="polygon22"></polygon><text x="151.8114" y="188.0923" text-anchor="middle" font-family="'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace" font-weight="700" font-size="57.8249px" letter-spacing="0.5" fill="#f4efe3" id="text24" style="stroke-width:1.44562"><tspan style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Cantarell;-inkscape-font-specification:'Cantarell Bold';stroke-width:1.44562" id="tspan1649">PCIdep</tspan></text><metadata id="metadata857">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:title>PCIdep</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata></svg>
