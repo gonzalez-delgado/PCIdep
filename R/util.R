@@ -385,11 +385,17 @@ validate_seed <- function(seed){
 
   if (is.null(seed)) { return(NULL) }
 
-  if (!is.numeric(seed) || length(seed) != 1 || is.na(seed) || !is.finite(seed) || seed != as.integer(seed)) {
+  if (!is.numeric(seed) || length(seed) != 1 || is.na(seed) || !is.finite(seed)) {
     stop("'seed' must be NULL or a single integer.")
   }
 
-  as.integer(seed)
+  seed_int <- suppressWarnings(as.integer(seed))
+
+  if (is.na(seed_int) || seed != seed_int) {
+    stop("'seed' must be NULL or a single integer.")
+  }
+
+  seed_int
 }
 
 #' @title Validate the number of Monte-Carlo draws
@@ -408,11 +414,22 @@ validate_seed <- function(seed){
 
 validate_ndraws <- function(ndraws){
 
-  if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0 || ndraws != as.integer(ndraws)) {
+  if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0) {
     stop("'ndraws' must be a single positive integer.")
   }
 
-  as.integer(ndraws)
+  # Coerce once, outside the integer range check: as.integer() overflows to
+  # NA (with a warning) for finite values too large to represent as a
+  # 32-bit integer, which must be reported as our own validation error
+  # rather than surfacing that warning or an "NA where TRUE/FALSE needed"
+  # error from the comparison below.
+  ndraws_int <- suppressWarnings(as.integer(ndraws))
+
+  if (is.na(ndraws_int) || ndraws != ndraws_int) {
+    stop("'ndraws' must be a single positive integer.")
+  }
+
+  ndraws_int
 }
 
 #' @title Validate a k-means clustering candidate
@@ -484,6 +501,9 @@ test_statistic <- function(cl, clusters, X, U, Sigma){
 
   n1 <- sum(cl == clusters[1])
   n2 <- sum(cl == clusters[2])
+  if (n1 == 0 || n2 == 0) {
+    stop("Both requested 'clusters' must be present in 'cl'.")
+  }
   nu <- Matrix::Matrix((cl == clusters[1])/n1 - (cl == clusters[2])/n2)
 
   diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X)
