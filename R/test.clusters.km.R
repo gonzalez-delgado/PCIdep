@@ -156,8 +156,7 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
                                         seed = seed,
                                         sig = 1,
                                         tol_eps = tol,
-                                        iter.max = itermax,
-                                        verbose = verbose),
+                                        iter.max = itermax),
       error = function(e) {
         stop("k-means clustering failed with seed = ", if(is.null(seed)) "NULL" else seed, ": ",
              conditionMessage(e), ". Try a different 'seed'.")
