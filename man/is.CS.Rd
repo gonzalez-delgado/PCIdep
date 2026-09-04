@@ -34,7 +34,11 @@ Other Utilities:
 \code{\link{ARI}()},
 \code{\link{preserve.cl}()},
 \code{\link{setup.model}()},
+\code{\link{test_statistic}()},
 \code{\link{validate_hc_setting}()},
-\code{\link{validate_km_setting}()}
+\code{\link{validate_km_candidate}()},
+\code{\link{validate_km_setting}()},
+\code{\link{validate_ndraws}()},
+\code{\link{validate_seed}()}
 }
 \concept{Utilities}

@@ -171,7 +171,15 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   return_X_clus <- validated$return_X_clus
 
   # Set up data and dependency structures, estimate Sigma if needed
-  setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY, verbose = verbose)
+  setup_model <- setup.model(X = X,
+                            U = U,
+                            Sigma = Sigma,
+                            Y = Y,
+                            UY = UY,
+                            precUY = precUY,
+                            sample_split = sample_split,
+                            nY = nY,
+                            verbose = verbose)
   X <- setup_model$X
   U <- setup_model$U
   Sigma <- setup_model$Sigma
@@ -194,24 +202,19 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   # --------------- Test for the difference of cluster means ---------------
   
   # Select individuals from each cluster
-  hcl_at_K <- stats::cutree(hcl, NC)  
-  n1 <- sum(hcl_at_K == clusters[1])
-  n2 <- sum(hcl_at_K == clusters[2])
-  nu <- Matrix::Matrix((hcl_at_K == clusters[1])/n1 - (hcl_at_K == clusters[2])/n2)
-  norm2_nu <- 1/n1 + 1/n2
+  hcl_at_K <- stats::cutree(hcl, NC)
 
-  # Difference of cluster means 
-  diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X) 
-  
-  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x}, where V = nu^T U nu Sigma
-  norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
-  V_g1g2 <- norm2U_nu[1]*Sigma
-  V_g1g2_inv <- Matrix::solve(V_g1g2)
-  stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv,diff_means))) # Test statistic (norm_V{diff_means})
+  # Test statistic (V-norm of the difference of cluster means)
+  stat_V <- test_statistic(cl = hcl_at_K,
+                          clusters = clusters,
+                          X = X,
+                          U = U,
+                          Sigma = Sigma)
   
   if(linkage != "complete"){ # Code adapted from clusterpval package (Gao et al. 2022)
     
-    # Computation of the truncation set for the 2-norm in Gao et al. 2022
+    # --------------- Computation of the truncation set for the 2-norm (Gao et al. 2022) ---------------
+    
     test_gao <- clusterpval::test_hier_clusters_exact(X=as.matrix(X),
                                                     link = linkage,
                                                     K = NC,
@@ -219,11 +222,13 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
                                                     k2 = clusters[2],
                                                     hcl = hcl,
                                                     dist = dismat)
+
     S2 <- test_gao$trunc # Truncation set for the 2-norm and positive phi's
     stat_2 <- test_gao$stat # Test statistic for the 2-norm (2-norm of diff_means)
     SV <- S2*as.numeric(exp(log(stat_V)-log(stat_2))) # Truncation set for the V-norm
     
-    # Computation of the p-value using the chisq distribution
+    # --------------- Computation of the p-value using the chisq distribution ---------------
+    
     I1 <- intervals::Intervals(c(stat_V^2, Inf))
     I2 <- suppressWarnings(intervals::interval_intersection(I1, SV^2))
     pv <- clusterpval::TChisqRatioApprox(dim(Sigma)[1], I2, SV^2)
@@ -232,40 +237,43 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     if(return_Sigma){return_list$Sigma <- Sigma}
     if(return_X_clus & sample_split){return_list$X_clus <- X}
 
-    return(return_list)}else{ # Complete linkage
+    return(return_list)}else{
 
-      if(verbose){cat('Clustering with complete linkage. Monte-Carlo approximation of the p-value.\n')}
-
-      if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0 || ndraws != as.integer(ndraws)) {
-        stop("'ndraws' must be a single positive integer.")
-      }
-      ndraws <- as.integer(ndraws)
-
-      # Monte-Carlo approximation of the p-value for complete linkage, without explicit computation of the truncation set.
+      # --------------- Monte-Carlo approximation of the p-value for complete linkage ---------------
       # Code adapted from clusterval package (Gao et al. 2022).
-      
-      prop_k2 <- n2/(n1+n2)
-      phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
-      
-      diff_means <- as.numeric(diff_means)
-      k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
-      k2_constant <- (prop_k2 - 1)*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
+
+      if(verbose){message('Clustering with complete linkage. Monte-Carlo approximation of the p-value.')}
+
+      ndraws <- validate_ndraws(ndraws)
+     
       orig_k1 <- Matrix::t(X[hcl_at_K == clusters[1], , drop = FALSE])
       orig_k2 <- Matrix::t(X[hcl_at_K == clusters[2], , drop = FALSE])
+      n1 <- sum(hcl_at_K == clusters[1])
+      n2 <- sum(hcl_at_K == clusters[2])
+      prop_k2 <- n2/(n1+n2)
+
+      nu <- Matrix::Matrix((hcl_at_K == clusters[1])/n1 - (hcl_at_K == clusters[2])/n2)
+      diff_means <- as.numeric(Matrix::Matrix(Matrix::t(nu)%*%X))   
       
+      k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
+      k2_constant <- (prop_k2 - 1)*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
+      
+      phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
       Xphi <- X
 
       results_list <- future.apply::future_lapply(X = seq_len(ndraws), FUN = function(j) {
 
         if(phi[j] < 0) return(list(ls = NA, preserved = FALSE))
 
-        # Compute perturbed data set for positive phi's
+        # --------------- Compute perturbed data set for positive phi's ---------------
+        
         Xphi <- X
         phi_minus_stat <- phi[j] - stat_V 
         Xphi[hcl_at_K == clusters[1], ] <- Matrix::t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
         Xphi[hcl_at_K == clusters[2], ] <- Matrix::t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
     
-        # Recluster the perturbed data set
+        # --------------- Recluster the perturbed data set ---------------
+        
         hcl_Xphi <- fastcluster::hclust(stats::dist(Xphi)^2, method = "complete")
         clusters_Xphi <- stats::cutree(hcl_Xphi, NC)
 
@@ -282,13 +290,15 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
       log_survives <- unlist(lapply(results_list, `[[`, "ls"))
       n_preserved <- sum(unlist(lapply(results_list, `[[`, "preserved")))
       
-      # Trim down to only survives
+      # --------------- Trim down to only survives ---------------
+      
       phi <- phi[!is.na(log_survives)]
       log_survives <- log_survives[!is.na(log_survives)]
       
       survives <- length(log_survives)
       
-      # Return nothing if nothing survives
+      # --------------- Return nothing if nothing survives ---------------
+      
       if(survives == 0) {
         warning("No samples that preserved the clusters were generated. Try re-running with a larger value of ndraws.")
         return_list <- list(pvalue = NA, stat = NA, hcl = hcl_at_K, stderr = NA, n_preserved = n_preserved)
@@ -297,7 +307,8 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
         return(return_list)
       }
       
-      #  Approximate p-values
+      # --------------- Approximate p-values ---------------
+
       log_survives_shift <- log_survives - max(log_survives)
       props <- exp(log_survives_shift)/sum(exp(log_survives_shift))
       pv <- sum(props[phi >= stat_V])

@@ -24,7 +24,7 @@
 #' @param tol Numeric tolerance parameter controlling convergence of the k-means algorithm, passed as \code{tol_eps}.
 #' @param seed Optional integer. Random seed passed to \code{KmeansInference::kmeans_inference} to control the k-means initialization. If \code{NULL} (the default), the package's default initialization is used.
 #'   If the resulting partition does not have exactly \code{NC} distinct clusters containing both requested \code{clusters}, the function stops with an error asking the user to retry with a different \code{seed}.
-#'   Ignored when \code{km_at_cl} is supplied.
+#'   Ignored when \code{km_at_cl} is supplied and used (i.e., when \code{sample_split = FALSE}).
 #' @param km_at_cl An optional precomputed output of \code{KmeansInference::kmeans_inference()}.
 #'   When supplied, the clustering and truncation-set computation steps are skipped and the
 #'   precomputed partition and interval are used directly.  This is useful when testing the same
@@ -143,9 +143,11 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
  
   # --------------- Cluster data ---------------
   
-  # K-means clustering from KmeansInference package
   if(is.null(km_at_cl)){
-    candidate <- tryCatch(
+
+    seed <- validate_seed(seed)
+
+    candidate <- tryCatch( # K-means clustering from KmeansInference package
       KmeansInference::kmeans_inference(X=as.matrix(X),
                                         k = NC,
                                         cluster_1 = clusters[1],
@@ -154,40 +156,31 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
                                         seed = seed,
                                         sig = 1,
                                         tol_eps = tol,
-                                        iter.max = itermax),
+                                        iter.max = itermax,
+                                        verbose = verbose),
       error = function(e) {
         stop("k-means clustering failed with seed = ", if(is.null(seed)) "NULL" else seed, ": ",
              conditionMessage(e), ". Try a different 'seed'.")
       }
     )
 
-    km_unique <- sort(unique(as.vector(candidate$final_cluster)))
-    
-    if(length(km_unique) != NC || !all(clusters %in% km_unique)){
-      stop("k-means clustering with seed = ", if(is.null(seed)) "NULL" else seed,
-           " returned ", length(km_unique), " distinct cluster(s) instead of NC = ", NC,
-           ", or did not include the requested clusters. Please try a different 'seed'.")
-    }
-    km_at_cl <- candidate
+    km_at_cl <- validate_km_candidate(candidate=candidate,
+                                    NC = NC,
+                                    clusters = clusters,
+                                    seed = seed)
   }
 
   # --------------- Test for the difference of cluster means ---------------
 
   # Select individuals from each cluster
   km_labels <- as.vector(km_at_cl$final_cluster) # Clustering partition
-  n1 <- sum(km_labels == clusters[1])
-  n2 <- sum(km_labels == clusters[2])
-  nu <- Matrix::Matrix((km_labels == clusters[1])/n1 - (km_labels == clusters[2])/n2)
-  norm2_nu <- 1/n1 + 1/n2
-  
-  # Difference of cluster means 
-  diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X) 
-  
-  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x}, where V = nu^T U nu Sigma
-  norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
-  V_g1g2 <- norm2U_nu[1]*Sigma
-  V_g1g2_inv <- Matrix::solve(V_g1g2)
-  stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv,diff_means))) # Test statistic (norm_V{diff_means})
+
+  # Test statistic (V-norm of the difference of cluster means)
+  stat_V <- test_statistic(cl = km_labels,
+                          clusters = clusters,
+                          X = X,
+                          U = U,
+                          Sigma = Sigma)
   
   # Computation of the truncation set for the 2-norm in Chen et al. 2022
   S2 <- km_at_cl$final_interval # Truncation set for the 2-norm

@@ -37,11 +37,21 @@ make_km_data <- function(seed = 1) {
 
 # run_km() is a thin wrapper around test.clusters.km() that fixes NC = 3 and
 # passes data from a make_km_data() list, reducing boilerplate in each test.
-run_km <- function(d, clusters, ...) {
+# seed defaults to a fixed value (rather than test.clusters.km()'s own
+# NULL default) so that tests not specifically about the seed argument are
+# deterministic: with seed = NULL, kmeans_inference() draws from R's
+# ambient global RNG state rather than resetting it, so its outcome can
+# depend on prior random draws elsewhere and is not reliably reproducible
+# across environments -- this previously caused intermittent CI failures
+# where k-means happened to collapse to fewer than NC clusters. Tests that
+# specifically exercise the seed argument (including seed = NULL) override
+# this default explicitly.
+run_km <- function(d, clusters, seed = 5, ...) {
   test.clusters.km(
     X = d$X, U = d$U, Sigma = d$Sigma,
     NC = 3, clusters = clusters,
     itermax = 50, tol = 1e-6,
+    seed = seed,
     ...
   )
 }
@@ -115,7 +125,7 @@ test_that("test.clusters.km includes Sigma in output when return_Sigma = TRUE", 
     test.clusters.km(
       X = d$X, U = d$U, Sigma = d$Sigma,
       NC = 3, clusters = c(1, 3),
-      return_Sigma = TRUE
+      return_Sigma = TRUE, seed = 5
     )
   )
   expect_true("Sigma" %in% names(res))
@@ -131,7 +141,7 @@ test_that("test.clusters.km works with Sigma estimated from auxiliary Y", {
   res <- suppressMessages(
     test.clusters.km(
       X = d$X, U = d$U, Sigma = NULL, Y = Y,
-      NC = 3, clusters = c(1, 3)
+      NC = 3, clusters = c(1, 3), seed = 5
     )
   )
   expect_gte(res$pvalue, 0)
@@ -152,7 +162,7 @@ test_that("test.clusters.km works with sample splitting", {
     test.clusters.km(
       X = X, U = NULL, Sigma = NULL,
       NC = 3, clusters = c(1, 3),
-      sample_split = TRUE
+      sample_split = TRUE, seed = 5
     )
   ))
   expect_gte(res$pvalue, 0)
@@ -220,6 +230,20 @@ test_that("test.clusters.km error message reports the seed that was used", {
     test.clusters.km(X = d$X, U = d$U, Sigma = d$Sigma, NC = d$n + 1, clusters = c(1, 2), seed = 3, verbose = FALSE),
     regexp = "seed = 3"
   )
+})
+
+# seed must be NULL or a single non-missing integer. Malformed values (a
+# vector, a non-integer numeric, NA, or a non-numeric value) must be rejected
+# immediately with a clear error, rather than being silently truncated,
+# recycled, or coerced to NA by the underlying clustering call.
+test_that("test.clusters.km rejects malformed seed values", {
+  d <- make_km_data()
+  for (bad_seed in list(c(1, 2, 3), 1.5, NA, "abc", Inf)) {
+    expect_error(
+      run_km(d, clusters = c(1, 3), seed = bad_seed),
+      regexp = "seed"
+    )
+  }
 })
 
 # ---- Under the null (uniform p-values over many runs) -------------------

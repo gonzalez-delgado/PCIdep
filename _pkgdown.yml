@@ -42,6 +42,7 @@ reference:
   - is.CS
   - preserve.cl
   - ARI
+  - test_statistic
 articles:
 - title: User guide
   navbar: ~
