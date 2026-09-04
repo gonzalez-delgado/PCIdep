@@ -40,7 +40,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
   if(is.null(U)){
 
     U <- Matrix::Diagonal(dim(X)[1]) # Independent observations by default
-    if(verbose){cat('U is not provided: observations are considered independent with unit variance.\n')}
+    if(verbose){message('U is not provided: observations are considered independent with unit variance.')}
   
   }else{ 
     
@@ -101,7 +101,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
     
     # ----------- Get U^{-1} associated to Y -----------
 
-    if(verbose){cat('Sigma not provided: plugging an over-estimate.\n')}
+    if(verbose){message('Sigma not provided: plugging an over-estimate.')}
     
     if(is.null(UY) & is.null(precUY)){
       
@@ -119,7 +119,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
     # ----------- Estimate Sigma using Y and precUY -----------
 
     if (is.data.frame(Y)) {
-      if(verbose){cat("Y was provided or sampled as a data.frame and has been coerced to a Matrix.\n")}
+      if(verbose){message("Y was provided or sampled as a data.frame and has been coerced to a Matrix.")}
       Y <- as.matrix(Y)
     }
     Y <- Matrix::Matrix(Y) # Memory efficiency
@@ -141,7 +141,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
   # ----------- Checks on X -----------
 
   if (is.data.frame(X)) {
-    if(verbose){cat("X was provided as a data.frame and has been coerced to a Matrix.\n")}
+    if(verbose){message("X was provided as a data.frame and has been coerced to a Matrix.")}
     X <- as.matrix(X)
   }
   X <- Matrix::Matrix(X)
@@ -360,6 +360,140 @@ validate_hc_setting <- function(hcl, dismat, X, NC, clusters, linkage, linkage_m
   }
 
   return(list(hcl = hcl, dismat = dismat, linkage = linkage, return_X_clus = return_X_clus))
+}
+
+#' @title Validate a k-means random seed
+#' @family Utilities
+#' @description
+#' Validates the \code{seed} argument used to control the k-means
+#' initialization in \code{KmeansInference::kmeans_inference()}. A valid
+#' \code{seed} must be \code{NULL} or a single non-missing, finite integer;
+#' malformed values (a vector, a non-integer numeric, \code{NA}, or a
+#' non-numeric value) are rejected immediately rather than being silently
+#' truncated, recycled, or coerced to \code{NA} by the underlying clustering
+#' call.
+#'
+#' @param seed \code{NULL}, or a value intended to be used as a single
+#'   integer random seed.
+#'
+#' @return \code{NULL} if \code{seed} is \code{NULL}, otherwise \code{seed}
+#'   coerced to a single integer.
+#'
+#' @keywords internal
+
+validate_seed <- function(seed){
+
+  if (is.null(seed)) { return(NULL) }
+
+  if (!is.numeric(seed) || length(seed) != 1 || is.na(seed) || !is.finite(seed) || seed != as.integer(seed)) {
+    stop("'seed' must be NULL or a single integer.")
+  }
+
+  as.integer(seed)
+}
+
+#' @title Validate the number of Monte-Carlo draws
+#' @family Utilities
+#' @description
+#' Validates the \code{ndraws} argument used to approximate the p-value for
+#' complete-linkage hierarchical clustering in \code{test.clusters.hc}. A
+#' valid \code{ndraws} must be a single positive, finite integer.
+#'
+#' @param ndraws A value intended to be used as the number of Monte-Carlo
+#'   draws.
+#'
+#' @return \code{ndraws} coerced to a single integer.
+#'
+#' @keywords internal
+
+validate_ndraws <- function(ndraws){
+
+  if (!is.numeric(ndraws) || length(ndraws) != 1 || is.na(ndraws) || !is.finite(ndraws) || ndraws <= 0 || ndraws != as.integer(ndraws)) {
+    stop("'ndraws' must be a single positive integer.")
+  }
+
+  as.integer(ndraws)
+}
+
+#' @title Validate a k-means clustering candidate
+#' @family Utilities
+#' @description
+#' Validates a candidate clustering result returned by
+#' \code{KmeansInference::kmeans_inference()} for a given \code{seed}: it
+#' must have exactly \code{NC} distinct clusters, and both requested
+#' \code{clusters} must be present among them. Stops with an informative
+#' error asking the user to try a different \code{seed} otherwise.
+#'
+#' @param candidate The output of \code{KmeansInference::kmeans_inference()}.
+#' @param NC Integer scalar giving the number of clusters.
+#' @param clusters Integer vector of length 2 specifying the pair of clusters
+#'   to compare. Entries must belong to \code{1:NC}.
+#' @param seed The seed used to produce \code{candidate} (or \code{NULL}),
+#'   only used to compose the error message.
+#'
+#' @return \code{candidate}, unchanged, if it is valid.
+#'
+#' @keywords internal
+
+validate_km_candidate <- function(candidate, NC, clusters, seed){
+
+  km_unique <- sort(unique(as.vector(candidate$final_cluster)))
+
+  if(length(km_unique) != NC || !all(clusters %in% km_unique)){
+    stop("k-means clustering with seed = ", if(is.null(seed)) "NULL" else seed,
+         " returned ", length(km_unique), " distinct cluster(s) instead of NC = ", NC,
+         ", or did not include the requested clusters. Please try a different 'seed'.")
+  }
+
+  candidate
+}
+
+#' @title V-norm test statistic for the difference of two cluster means
+#' @family Utilities
+#' @description
+#' Computes the test statistic shared by the post-clustering inference
+#' functions \code{test.clusters.hc}, \code{test.clusters.km}, and
+#' \code{test.clusters.MC}: the V-norm of the difference between the means
+#' of two selected clusters, \eqn{\|\nu^\top X\|_V = \sqrt{(\nu^\top X)^\top V^{-1} (\nu^\top X)}},
+#' where \eqn{\nu^\top X} is the difference of cluster means and
+#' \eqn{V = (\nu^\top U \nu)\,\Sigma}, with \eqn{\nu} the contrast vector
+#' between the two selected clusters.
+#'
+#' @param cl Integer (or factor) vector of length \eqn{n} giving the cluster
+#'   assignment of each observation.
+#' @param clusters Integer vector of length 2 specifying the pair of clusters
+#'   to compare. Both entries must be present in \code{cl}.
+#' @param X A numeric \eqn{n \times p} data matrix.
+#' @param U An \eqn{n \times n} positive-definite matrix describing the
+#'   dependence structure between the rows of \code{X}.
+#' @param Sigma A \eqn{p \times p} positive-definite matrix describing the
+#'   dependence structure between the columns of \code{X}.
+#'
+#' @return A numeric scalar giving the test statistic (V-norm of the
+#'   difference of cluster means).
+#'
+#' @examples
+#' n <- 30; p <- 5
+#' X <- matrix(rnorm(n * p), nrow = n)
+#' cl <- rep(1:3, each = 10)
+#' test_statistic(cl = cl, clusters = c(1, 2), X = X, U = diag(n), Sigma = diag(p))
+#'
+#' @export
+
+test_statistic <- function(cl, clusters, X, U, Sigma){
+
+  n1 <- sum(cl == clusters[1])
+  n2 <- sum(cl == clusters[2])
+  nu <- Matrix::Matrix((cl == clusters[1])/n1 - (cl == clusters[2])/n2)
+
+  diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X)
+
+  norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
+  V_g1g2 <- norm2U_nu[1]*Sigma
+  V_g1g2_inv <- Matrix::solve(V_g1g2)
+  stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv, diff_means)))
+  return(stat_V)
+
 }
 
 #' @title Check for compound symmetry

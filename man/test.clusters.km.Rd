@@ -52,7 +52,7 @@ rows of \code{Y}. If \code{NULL} and \code{precUY} is not provided, the identity
 
 \item{seed}{Optional integer. Random seed passed to \code{KmeansInference::kmeans_inference} to control the k-means initialization. If \code{NULL} (the default), the package's default initialization is used.
 If the resulting partition does not have exactly \code{NC} distinct clusters containing both requested \code{clusters}, the function stops with an error asking the user to retry with a different \code{seed}.
-Ignored when \code{km_at_cl} is supplied.}
+Ignored when \code{km_at_cl} is supplied and used (i.e., when \code{sample_split = FALSE}).}
 
 \item{km_at_cl}{An optional precomputed output of \code{KmeansInference::kmeans_inference()}.
 When supplied, the clustering and truncation-set computation steps are skipped and the

@@ -171,43 +171,44 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   n1 <- sum(cl == clusters[1])
   n2 <- sum(cl == clusters[2])
   nu <- Matrix::Matrix((cl == clusters[1])/n1 - (cl == clusters[2])/n2)
-  norm2_nu <- 1/n1 + 1/n2
+
+  # Difference of cluster means (reused below in the Monte-Carlo path)
+  diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X)
+
+  # Test statistic (V-norm of the difference of cluster means)
+  stat_V <- test_statistic(cl = cl,
+                          clusters = clusters,
+                          X = X,
+                          U = U,
+                          Sigma = Sigma)
   
-  # Difference of cluster means 
-  diff_means <- Matrix::Matrix(Matrix::t(nu)%*%X) 
-  
-  # Computation of the norm \norm{x}_V = \sqrt{x^T V^{-1} x}, where V = nu^T U nu Sigma
-  norm2U_nu <- Matrix::crossprod(nu, U)%*%nu
-  V_g1g2 <- norm2U_nu[1]*Sigma
-  V_g1g2_inv <- Matrix::solve(V_g1g2)
-  stat_V <- as.numeric(sqrt(diff_means %*% Matrix::tcrossprod(V_g1g2_inv,diff_means))) # Test statistic (norm_V{diff_means})
-  
-  # Monte-Carlo approximation of the p-value, without explicit computation of the truncation set.
+  # --------------- Monte-Carlo approximation of the p-value ---------------
   # Code adapted from clusterval package (Gao et al. 2022)
      
+  orig_k1 <- Matrix::t(X[cl == clusters[1], , drop = FALSE])
+  orig_k2 <- Matrix::t(X[cl == clusters[2], , drop = FALSE])
   prop_k2 <- n2/(n1+n2)
-  phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)
       
   diff_means <- as.numeric(diff_means)
   k1_constant <- prop_k2*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
   k2_constant <- (prop_k2 - 1)*exp(log(abs(diff_means)) - log(stat_V))*sign(diff_means)
   
-  orig_k1 <- Matrix::t(X[cl == clusters[1], , drop = FALSE])
-  orig_k2 <- Matrix::t(X[cl == clusters[2], , drop = FALSE])
-      
+  phi <- stats::rnorm(ndraws, stat_V, sqrt(sum(Matrix::diag(Sigma)))) # N(stat, Tr(Sigma)^0.5)  
   Xphi <- X
   
   results_list <- future.apply::future_lapply(X = seq_len(ndraws), FUN = function(j) {
     
     if(phi[j] < 0) return(list(ls = NA, preserved = FALSE))
     
-    # Compute perturbed data set for positive phi's
+    # ---------------Compute perturbed data set for positive phi's ---------------
+    
     Xphi <- X
     phi_minus_stat <- phi[j] - stat_V 
     Xphi[cl == clusters[1], ] <- Matrix::t(orig_k1 + sign(k1_constant)*sign(phi_minus_stat)*exp(log(abs(k1_constant)) + log(abs(phi_minus_stat))))
     Xphi[cl == clusters[2], ] <- Matrix::t(orig_k2 + sign(k2_constant)*sign(phi_minus_stat)*exp(log(abs(k2_constant)) + log(abs(phi_minus_stat))))
     
-    # Recluster the perturbed data set
+    # --------------- Recluster the perturbed data set ---------------
+    
     cl_Xphi <- cl_fun_wrapper(Xphi)
 
     if(preserve.cl(cl, cl_Xphi, clusters)) {
@@ -223,13 +224,15 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   log_survives <- unlist(lapply(results_list, `[[`, "ls"))
   n_preserved <- sum(unlist(lapply(results_list, `[[`, "preserved")))
   
-  # Trim down to only survives
+  # --------------- Trim down to only survives ---------------
+  
   phi <- phi[!is.na(log_survives)]
   log_survives <- log_survives[!is.na(log_survives)]
   
   survives <- length(log_survives)
   
-  # Return nothing if nothing survives
+  # --------------- Return nothing if nothing survives ---------------
+  
   if(survives == 0) {
     warning("No samples that preserved the clusters were generated. Try re-running with a larger value of ndraws.")
     return_list <- list(stat = stat_V, pvalue = NA, stderr = NA, clusters = cl, n_preserved = n_preserved)
@@ -238,7 +241,8 @@ test.clusters.MC <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
     return(return_list)
   }
       
-  #  Approximate p-values
+  # --------------- Approximate p-values ---------------
+  
   log_survives_shift <- log_survives - max(log_survives)
   props <- exp(log_survives_shift)/sum(exp(log_survives_shift))
   pv <- sum(props[phi >= stat_V])
