@@ -41,6 +41,8 @@ preserve.cl(cl, cl_phi2, clusters = c(1, 2))
 Other Utilities: 
 \code{\link{ARI}()},
 \code{\link{is.CS}()},
-\code{\link{setup.model}()}
+\code{\link{setup.model}()},
+\code{\link{validate_hc_setting}()},
+\code{\link{validate_km_setting}()}
 }
 \concept{Utilities}
