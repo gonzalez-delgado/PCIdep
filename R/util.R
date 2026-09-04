@@ -119,7 +119,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
     # ----------- Estimate Sigma using Y and precUY -----------
 
     if (is.data.frame(Y)) {
-      #warning("Y was provided or sampled as a data.frame and has been coerced to a Matrix.")
+      if(verbose){cat("Y was provided or sampled as a data.frame and has been coerced to a Matrix.\n")}
       Y <- as.matrix(Y)
     }
     Y <- Matrix::Matrix(Y) # Memory efficiency
@@ -141,7 +141,7 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
   # ----------- Checks on X -----------
 
   if (is.data.frame(X)) {
-    #warning("X was provided as a data.frame and has been coerced to a Matrix.")
+    if(verbose){cat("X was provided as a data.frame and has been coerced to a Matrix.\n")}
     X <- as.matrix(X)
   }
   X <- Matrix::Matrix(X)
@@ -159,6 +159,208 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
 
 }
 
+
+#' @title Validate k-means clustering setting
+#' @family Utilities
+#' @description
+#' Validates a precomputed \code{km_at_cl} object (the output of
+#' \code{KmeansInference::kmeans_inference()}) against the data matrix
+#' \code{X}, the requested number of clusters \code{NC} and the pair of
+#' \code{clusters} to compare. Also discards \code{km_at_cl} when sample
+#' splitting is requested (since \code{X} changes after splitting), checks
+#' that \code{clusters} is a valid specification, and reconciles
+#' \code{sample_split} with \code{return_X_clus}.
+#'
+#' @param km_at_cl An optional precomputed output of
+#'   \code{KmeansInference::kmeans_inference()}, or \code{NULL}.
+#' @param X A numeric \eqn{n \times p} data matrix.
+#' @param NC Integer scalar giving the number of clusters.
+#' @param clusters Integer vector of length 2 specifying the pair of clusters
+#'   to compare. Entries must belong to \code{1:NC}.
+#' @param sample_split Logical. Whether sample splitting is used to estimate
+#'   \code{Sigma}.
+#' @param return_X_clus Logical. Whether the data matrix used for clustering
+#'   should be returned.
+#'
+#' @return A named list with:
+#' \item{km_at_cl}{The validated \code{km_at_cl}, or \code{NULL} if it was
+#'   not provided or was discarded because \code{sample_split = TRUE}.}
+#' \item{return_X_clus}{The (possibly adjusted) \code{return_X_clus} flag.}
+#'
+#' @export
+
+validate_km_setting <- function(km_at_cl, X, NC, clusters, sample_split, return_X_clus){
+
+  # ----------- Validate precomputed km_at_cl if provided -----------
+  
+  if (!is.null(km_at_cl)) {
+    if (!is.list(km_at_cl) || !all(c("final_cluster", "final_interval", "test_stat") %in% names(km_at_cl))) {
+      stop("'km_at_cl' must be the output of 'KmeansInference::kmeans_inference()'.")
+    }
+    if (length(km_at_cl$final_cluster) != nrow(X)) {
+      stop(paste0(
+        "'km_at_cl' contains ", length(km_at_cl$final_cluster), " cluster labels but X has ", nrow(X),
+        " rows. 'km_at_cl' must be computed on the same data matrix X."
+      ))
+    }
+    km_unique <- sort(unique(as.vector(km_at_cl$final_cluster)))
+    if (length(km_unique) != NC) {
+      stop(paste0(
+        "'km_at_cl' contains ", length(km_unique), " distinct cluster(s) but NC = ", NC, "."
+      ))
+    }
+    if (!all(clusters %in% km_unique)) {
+      stop(paste0(
+        "The cluster labels in 'clusters' (", paste(clusters, collapse = ", "),
+        ") are not all present in 'km_at_cl$final_cluster'."
+      ))
+    }
+  }
+
+  # ----------- Discard precomputed km_at_cl when sample splitting, since X changes after the split -----------
+  
+  if (!is.null(km_at_cl) && sample_split) {
+    warning("'km_at_cl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
+    km_at_cl <- NULL
+  }
+
+  # ----------- Check for correct clustering specification -----------
+  
+  if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
+
+  # ----------- Check consistency between sample_split and return_X_clus -----------
+
+  if(!sample_split & return_X_clus){
+    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
+    return_X_clus <- FALSE
+  }
+  if(sample_split & !return_X_clus){
+    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
+  }
+
+  return(list(km_at_cl = km_at_cl, return_X_clus = return_X_clus))
+}
+
+#' @title Validate hierarchical clustering setting
+#' @family Utilities
+#' @description
+#' Validates a precomputed hierarchical clustering object \code{hcl} and/or
+#' distance object \code{dismat} against the data matrix \code{X}, infers or
+#' validates the linkage criterion, and checks that \code{clusters} is a
+#' valid specification. Also discards precomputed \code{hcl} and \code{dismat}
+#' when sample splitting is requested (since \code{X} changes after
+#' splitting), and reconciles \code{sample_split} with \code{return_X_clus}.
+#'
+#' @param hcl An optional precomputed hierarchical clustering object of class
+#'   \code{"hclust"}, as returned by \code{fastcluster::hclust()} or
+#'   \code{stats::hclust()}, or \code{NULL}.
+#' @param dismat An optional precomputed squared Euclidean distance object of
+#'   class \code{"dist"}, as returned by
+#'   \code{stats::dist(X, method = "euclidean")^2}, or \code{NULL}.
+#' @param X An \eqn{n \times p} data matrix.
+#' @param NC Integer. Number of clusters in the partition obtained by cutting
+#'   the hierarchical clustering tree.
+#' @param clusters Integer vector of length 2 containing the labels of the
+#'   two clusters to compare. Entries must belong to \code{1:NC}.
+#' @param linkage Character string specifying the linkage criterion used in
+#'   hierarchical clustering. Ignored (and overridden) when \code{hcl} is
+#'   provided.
+#' @param linkage_missing Logical. Whether \code{linkage} was left at its
+#'   default (i.e., \code{missing(linkage)} in the calling function), used to
+#'   decide whether to warn about a mismatch with \code{hcl$method}.
+#' @param sample_split Logical. Whether sample splitting is used to estimate
+#'   \code{Sigma}.
+#' @param return_X_clus Logical. Whether the data matrix used for clustering
+#'   should be returned.
+#'
+#' @return A named list with:
+#' \item{hcl}{The validated \code{hcl}, or \code{NULL} if it was not provided
+#'   or was discarded because \code{sample_split = TRUE}.}
+#' \item{dismat}{The validated \code{dismat}, or \code{NULL} if it was not
+#'   provided or was discarded because \code{sample_split = TRUE}.}
+#' \item{linkage}{The validated (or \code{hcl}-inferred) linkage criterion.}
+#' \item{return_X_clus}{The (possibly adjusted) \code{return_X_clus} flag.}
+#'
+#' @export
+
+validate_hc_setting <- function(hcl, dismat, X, NC, clusters, linkage, linkage_missing, sample_split, return_X_clus){
+
+  # ----------- Discard precomputed hcl and dismat when sample splitting, since X changes after the split -----------
+  
+  if (!is.null(hcl) && sample_split) {
+    warning("'hcl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
+    hcl <- NULL
+  }
+  if (!is.null(dismat) && sample_split) {
+    warning("'dismat' is ignored when sample_split = TRUE because X is modified after splitting. The distance matrix will be recomputed on the subsample.")
+    dismat <- NULL
+  }
+
+  # ----------- Validate or infer linkage -----------
+  
+  if(is.null(hcl)){
+    if(!linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
+      stop('linkage must be one in "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".')}
+  }else{
+    if (!inherits(hcl, "hclust")) {
+      stop("'hcl' must be an object of class 'hclust' as returned by fastcluster::hclust() or stats::hclust().")}
+    if (length(hcl$order) != nrow(X)) {
+      stop(paste0(
+        "'hcl' was built on ", length(hcl$order), " observations but X has ", nrow(X),
+        " rows. 'hcl' must be computed on the same data matrix X."
+      ))
+    }
+    inferred_linkage <- hcl$method
+    if(!inferred_linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
+      stop(paste0('The linkage method stored in the provided hcl object ("', inferred_linkage, '") is not supported. Must be one of "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".'))}
+    if(!linkage_missing && linkage != inferred_linkage){
+      warning(paste0(
+        'The linkage argument ("', linkage, '") does not match the method stored in the provided hcl object ("',
+        inferred_linkage, '"). The linkage inferred from hcl will be used.'
+      ))
+    }
+    linkage <- inferred_linkage
+  }
+
+  # ----------- Validate dismat class and size -----------
+
+  if (!is.null(dismat)) {
+    if (!inherits(dismat, "dist")) {
+      stop("'dismat' must be an object of class 'dist' as returned by stats::dist(X, method = 'euclidean')^2.")
+    }
+    if (attr(dismat, "Size") != nrow(X)) {
+      stop(paste0(
+        "'dismat' was built on ", attr(dismat, "Size"), " observations but X has ", nrow(X),
+        " rows. 'dismat' must be computed on the same data matrix X."
+      ))
+    }
+  }
+
+  # ----------- Warn about incomplete precomputation: dismat without hcl, or hcl without dismat -----------
+  
+  if (!is.null(dismat) && is.null(hcl)) {
+    warning("'dismat' is provided but 'hcl' is not. The dendrogram will be computed from the provided 'dismat'. Pass 'hcl' as well to avoid recomputing it when testing multiple cluster pairs.")
+  }
+  if (!is.null(hcl) && is.null(dismat) && linkage != "complete") {
+    warning("'hcl' is provided but 'dismat' is not. The distance matrix will be recomputed internally. Pass 'dismat' as well to avoid recomputing it when testing multiple cluster pairs.")
+  }
+
+  # ----------- Check for correct clustering specification -----------
+  
+  if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
+
+  # ----------- Check consistency between sample_split and return_X_clus -----------
+  
+  if(!sample_split & return_X_clus){
+    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
+    return_X_clus <- FALSE
+  }
+  if(sample_split & !return_X_clus){
+    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
+  }
+
+  return(list(hcl = hcl, dismat = dismat, linkage = linkage, return_X_clus = return_X_clus))
+}
 
 #' @title Check for compound symmetry
 #' @family Utilities

@@ -155,76 +155,21 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # --------------- Initial checks and pre-processing ---------------
 
-  # Discard precomputed hcl and dismat when sample splitting, since X changes
-  # after the split.  Do this first so linkage is inferred from the explicit
-  # argument rather than from a stale hcl$method.
-  if (!is.null(hcl) && sample_split) {
-    warning("'hcl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
-    hcl <- NULL
-  }
-  if (!is.null(dismat) && sample_split) {
-    warning("'dismat' is ignored when sample_split = TRUE because X is modified after splitting. The distance matrix will be recomputed on the subsample.")
-    dismat <- NULL
-  }
+  # Validate hcl / dismat / linkage / clusters / sample_split / return_X_clus consistency
+  linkage_missing <- missing(linkage)
+  validated <- validate_hc_setting(hcl = hcl,
+                                  dismat = dismat,
+                                  X = X, NC = NC,
+                                  clusters = clusters,
+                                  linkage = linkage,
+                                  linkage_missing = linkage_missing,
+                                  sample_split = sample_split,
+                                  return_X_clus = return_X_clus)
+  hcl <- validated$hcl
+  dismat <- validated$dismat
+  linkage <- validated$linkage
+  return_X_clus <- validated$return_X_clus
 
-  # Validate or infer linkage
-  if(is.null(hcl)){
-    if(!linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
-      stop('linkage must be one in "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".')}
-  }else{
-    if (!inherits(hcl, "hclust")) {
-      stop("'hcl' must be an object of class 'hclust' as returned by fastcluster::hclust() or stats::hclust().")}
-    if (length(hcl$order) != nrow(X)) {
-      stop(paste0(
-        "'hcl' was built on ", length(hcl$order), " observations but X has ", nrow(X),
-        " rows. 'hcl' must be computed on the same data matrix X."
-      ))
-    }
-    inferred_linkage <- hcl$method
-    if(!inferred_linkage %in% c("single", "average", "centroid", "ward.D", "median", "mcquitty", "complete")){
-      stop(paste0('The linkage method stored in the provided hcl object ("', inferred_linkage, '") is not supported. Must be one of "single", "average", "centroid", "ward.D", "median", "mcquitty", "complete".'))}
-    if(!missing(linkage) && linkage != inferred_linkage){
-      warning(paste0(
-        'The linkage argument ("', linkage, '") does not match the method stored in the provided hcl object ("',
-        inferred_linkage, '"). The linkage inferred from hcl will be used.'
-      ))
-    }
-    linkage <- inferred_linkage
-  }
-
-  # Validate dismat class and size
-  if (!is.null(dismat)) {
-    if (!inherits(dismat, "dist")) {
-      stop("'dismat' must be an object of class 'dist' as returned by stats::dist(X, method = 'euclidean')^2.")
-    }
-    if (attr(dismat, "Size") != nrow(X)) {
-      stop(paste0(
-        "'dismat' was built on ", attr(dismat, "Size"), " observations but X has ", nrow(X),
-        " rows. 'dismat' must be computed on the same data matrix X."
-      ))
-    }
-  }
-
-  # Warn about incomplete precomputation: dismat without hcl, or hcl without dismat
-  if (!is.null(dismat) && is.null(hcl)) {
-    warning("'dismat' is provided but 'hcl' is not. The dendrogram will be computed from the provided 'dismat'. Pass 'hcl' as well to avoid recomputing it when testing multiple cluster pairs.")
-  }
-  if (!is.null(hcl) && is.null(dismat) && linkage != "complete") {
-    warning("'hcl' is provided but 'dismat' is not. The distance matrix will be recomputed internally. Pass 'dismat' as well to avoid recomputing it when testing multiple cluster pairs.")
-  }
-
-  # Check for correct clustering specification
-  if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
-
-  # Check consistency between sample_split and return_X_clus
-  if(!sample_split & return_X_clus){
-    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
-    return_X_clus <- FALSE
-  }
-  if(sample_split & !return_X_clus){
-    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
-  }
-  
   # Set up data and dependency structures, estimate Sigma if needed
   setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY, verbose = verbose)
   X <- setup_model$X
@@ -267,7 +212,13 @@ test.clusters.hc <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   if(linkage != "complete"){ # Code adapted from clusterpval package (Gao et al. 2022)
     
     # Computation of the truncation set for the 2-norm in Gao et al. 2022
-    test_gao <- clusterpval::test_hier_clusters_exact(as.matrix(X), link = linkage, K = NC, k1 = clusters[1], k2 = clusters[2], hcl = hcl, dist = dismat)
+    test_gao <- clusterpval::test_hier_clusters_exact(X=as.matrix(X),
+                                                    link = linkage,
+                                                    K = NC,
+                                                    k1 = clusters[1],
+                                                    k2 = clusters[2],
+                                                    hcl = hcl,
+                                                    dist = dismat)
     S2 <- test_gao$trunc # Truncation set for the 2-norm and positive phi's
     stat_2 <- test_gao$stat # Test statistic for the 2-norm (2-norm of diff_means)
     SV <- S2*as.numeric(exp(log(stat_V)-log(stat_2))) # Truncation set for the V-norm
