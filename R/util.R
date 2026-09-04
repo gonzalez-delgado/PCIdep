@@ -188,7 +188,6 @@ setup.model <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY =
 #' \item{return_X_clus}{The (possibly adjusted) \code{return_X_clus} flag.}
 #'
 #' @keywords internal
-#' @export
 
 validate_km_setting <- function(km_at_cl, X, NC, clusters, sample_split, return_X_clus){
 
@@ -283,7 +282,6 @@ validate_km_setting <- function(km_at_cl, X, NC, clusters, sample_split, return_
 #' \item{return_X_clus}{The (possibly adjusted) \code{return_X_clus} flag.}
 #'
 #' @keywords internal
-#' @export
 
 validate_hc_setting <- function(hcl, dismat, X, NC, clusters, linkage, linkage_missing, sample_split, return_X_clus){
 
