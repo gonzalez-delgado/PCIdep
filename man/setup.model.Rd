@@ -63,6 +63,8 @@ print(setup_result)
 Other Utilities: 
 \code{\link{ARI}()},
 \code{\link{is.CS}()},
-\code{\link{preserve.cl}()}
+\code{\link{preserve.cl}()},
+\code{\link{validate_hc_setting}()},
+\code{\link{validate_km_setting}()}
 }
 \concept{Utilities}

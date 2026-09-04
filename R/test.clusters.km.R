@@ -22,6 +22,9 @@
 #' @param clusters Integer vector of length 2 specifying the pair of clusters to compare. Entries must belong to \code{1:NC}.
 #' @param itermax Integer. Maximum number of iterations for the k-means algorithm, passed to \code{KmeansInference::kmeans_inference}.
 #' @param tol Numeric tolerance parameter controlling convergence of the k-means algorithm, passed as \code{tol_eps}.
+#' @param seed Optional integer. Random seed passed to \code{KmeansInference::kmeans_inference} to control the k-means initialization. If \code{NULL} (the default), the package's default initialization is used.
+#'   If the resulting partition does not have exactly \code{NC} distinct clusters containing both requested \code{clusters}, the function stops with an error asking the user to retry with a different \code{seed}.
+#'   Ignored when \code{km_at_cl} is supplied.
 #' @param km_at_cl An optional precomputed output of \code{KmeansInference::kmeans_inference()}.
 #'   When supplied, the clustering and truncation-set computation steps are skipped and the
 #'   precomputed partition and interval are used directly.  This is useful when testing the same
@@ -110,55 +113,30 @@
 #'
 #' @export
 
-test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6, km_at_cl = NULL, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE, verbose = TRUE){
+test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, precUY = NULL, NC, clusters, itermax = 10, tol = 1e-6, seed = NULL, km_at_cl = NULL, sample_split = FALSE, nY = NULL, return_Sigma = FALSE, return_X_clus = FALSE, verbose = TRUE){
   
   # --------------- Initial checks and pre-processing ---------------
 
-  # Validate precomputed km_at_cl if provided
-  if (!is.null(km_at_cl)) {
-    if (!is.list(km_at_cl) || !all(c("final_cluster", "final_interval", "test_stat") %in% names(km_at_cl))) {
-      stop("'km_at_cl' must be the output of 'KmeansInference::kmeans_inference()'.")
-    }
-    if (length(km_at_cl$final_cluster) != nrow(X)) {
-      stop(paste0(
-        "'km_at_cl' contains ", length(km_at_cl$final_cluster), " cluster labels but X has ", nrow(X),
-        " rows. 'km_at_cl' must be computed on the same data matrix X."
-      ))
-    }
-    km_unique <- sort(unique(as.vector(km_at_cl$final_cluster)))
-    if (length(km_unique) != NC) {
-      stop(paste0(
-        "'km_at_cl' contains ", length(km_unique), " distinct cluster(s) but NC = ", NC, "."
-      ))
-    }
-    if (!all(clusters %in% km_unique)) {
-      stop(paste0(
-        "The cluster labels in 'clusters' (", paste(clusters, collapse = ", "),
-        ") are not all present in 'km_at_cl$final_cluster'."
-      ))
-    }
-  }
-
-  # Discard precomputed km_at_cl when sample splitting, since X changes after the split
-  if (!is.null(km_at_cl) && sample_split) {
-    warning("'km_at_cl' is ignored when sample_split = TRUE because X is modified after splitting. The clustering will be recomputed on the subsample.")
-    km_at_cl <- NULL
-  }
-
-  # Check for correct clustering specification
-  if(!all(clusters %in% c(1:NC)) | length(clusters) != 2){stop('clusters must be a vector of two integers between 1 and NC.')}
-  
-  # Check consistency between sample_split and return_X_clus
-  if(!sample_split & return_X_clus){
-    warning('return_X_clus is set to FALSE because it is the same as the one passed as input.')
-    return_X_clus <- FALSE
-  }
-  if(sample_split & !return_X_clus){
-    warning('The sample used for clustering is a subsample of the one introduced as input (as sample_split is TRUE). Consider setting return_X_clus to TRUE for further analysis of the retrieved clusters.')
-  }
+  # Validate km_at_cl / clusters / sample_split / return_X_clus consistency
+  validated <- validate_km_setting(km_at_cl = km_at_cl,
+                                  X = X,
+                                  NC = NC,
+                                  clusters = clusters,
+                                  sample_split = sample_split,
+                                  return_X_clus = return_X_clus)
+  km_at_cl <- validated$km_at_cl
+  return_X_clus <- validated$return_X_clus
 
   # Set up data and dependency structures, estimate Sigma if needed
-  setup_model <- setup.model(X = X, U = U, Sigma = Sigma, Y = Y, UY = UY, precUY = precUY, sample_split = sample_split, nY = nY, verbose = verbose)
+  setup_model <- setup.model(X = X,
+                            U = U,
+                            Sigma = Sigma,
+                            Y = Y,
+                            UY = UY,
+                            precUY = precUY,
+                            sample_split = sample_split,
+                            nY = nY,
+                            verbose = verbose)
   X <- setup_model$X
   U <- setup_model$U
   Sigma <- setup_model$Sigma
@@ -167,27 +145,30 @@ test.clusters.km <- function(X, U = NULL, Sigma = NULL, Y = NULL, UY = NULL, pre
   
   # K-means clustering from KmeansInference package
   if(is.null(km_at_cl)){
-    seeds_to_try <- c(list(NULL), as.list(1L:10L))
-    last_error <- NULL
-    for(s in seeds_to_try){
-      candidate <- tryCatch(
-        KmeansInference::kmeans_inference(as.matrix(X), k = NC, cluster_1 = clusters[1], cluster_2 = clusters[2], verbose = FALSE, seed = s, sig = 1, tol_eps = tol, iter.max = itermax),
-        error = function(e) {last_error <<- conditionMessage(e); NULL}
-      )
-      if(!is.null(candidate)){
-        km_unique <- sort(unique(as.vector(candidate$final_cluster)))
-        if(length(km_unique) == NC && all(clusters %in% km_unique)){
-          km_at_cl <- candidate
-          break
-        } else {
-          last_error <- paste0("Clustering returned ", length(km_unique), " distinct cluster(s) instead of NC = ", NC, ", or did not include the requested clusters.")
-        }
+    candidate <- tryCatch(
+      KmeansInference::kmeans_inference(X=as.matrix(X),
+                                        k = NC,
+                                        cluster_1 = clusters[1],
+                                        cluster_2 = clusters[2],
+                                        verbose = FALSE,
+                                        seed = seed,
+                                        sig = 1,
+                                        tol_eps = tol,
+                                        iter.max = itermax),
+      error = function(e) {
+        stop("k-means clustering failed with seed = ", if(is.null(seed)) "NULL" else seed, ": ",
+             conditionMessage(e), ". Try a different 'seed'.")
       }
+    )
+
+    km_unique <- sort(unique(as.vector(candidate$final_cluster)))
+    
+    if(length(km_unique) != NC || !all(clusters %in% km_unique)){
+      stop("k-means clustering with seed = ", if(is.null(seed)) "NULL" else seed,
+           " returned ", length(km_unique), " distinct cluster(s) instead of NC = ", NC,
+           ", or did not include the requested clusters. Please try a different 'seed'.")
     }
-    if(is.null(km_at_cl)){
-      stop("k-means clustering did not return the desired number of clusters after multiple attempts. ",
-           "Try providing 'km_at_cl' directly. Last error: ", last_error)
-    }
+    km_at_cl <- candidate
   }
 
   # --------------- Test for the difference of cluster means ---------------

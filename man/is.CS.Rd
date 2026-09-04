@@ -33,6 +33,8 @@ is.CS(U2)
 Other Utilities: 
 \code{\link{ARI}()},
 \code{\link{preserve.cl}()},
-\code{\link{setup.model}()}
+\code{\link{setup.model}()},
+\code{\link{validate_hc_setting}()},
+\code{\link{validate_km_setting}()}
 }
 \concept{Utilities}

@@ -159,6 +159,69 @@ test_that("test.clusters.km works with sample splitting", {
   expect_lte(res$pvalue, 1)
 })
 
+# ---- Seed parameter ------------------------------------------------------
+
+# The seed argument is forwarded to KmeansInference::kmeans_inference() and
+# controls the k-means initialisation. With a fixed seed, clustering (and
+# hence the whole test) must be exactly reproducible.
+test_that("test.clusters.km with a fixed seed is reproducible", {
+  d <- make_km_data()
+  res1 <- suppressMessages(run_km(d, clusters = c(1, 3), seed = 5))
+  res2 <- suppressMessages(run_km(d, clusters = c(1, 3), seed = 5))
+  expect_identical(res1$km, res2$km)
+  expect_equal(res1$pvalue, res2$pvalue)
+  expect_equal(res1$stat, res2$stat)
+})
+
+# The seed must actually be forwarded to kmeans_inference(): the resulting
+# partition should match a manual call using the same seed.
+test_that("test.clusters.km seed matches a manual kmeans_inference() call", {
+  d <- make_km_data()
+  km_manual <- KmeansInference::kmeans_inference(
+    as.matrix(d$X), k = 3, cluster_1 = 1, cluster_2 = 3,
+    verbose = FALSE, seed = 5, sig = 1, tol_eps = 1e-6, iter.max = 50
+  )
+  res <- suppressMessages(run_km(d, clusters = c(1, 3), seed = 5))
+  expect_equal(res$km, as.vector(km_manual$final_cluster))
+})
+
+# seed = NULL is the default and must continue to work exactly as it did
+# before the seed argument was introduced.
+test_that("test.clusters.km works with the default seed = NULL", {
+  d <- make_km_data()
+  res <- suppressMessages(run_km(d, clusters = c(1, 3), seed = NULL))
+  expect_gte(res$pvalue, 0)
+  expect_lte(res$pvalue, 1)
+})
+
+# When k-means does not converge to the requested number of clusters for a
+# given seed, the function must stop with an informative error asking the
+# user to try a different seed. The data below (three duplicated points at the
+# origin plus three well-separated points, with NC = 4) gives k-means too
+# little structure to fill 4 clusters, and this fails deterministically for
+# seed = 1.
+test_that("test.clusters.km stops and asks for a different seed when clustering degenerates", {
+  X <- rbind(
+    matrix(c(0, 0), nrow = 1), matrix(c(0, 0), nrow = 1), matrix(c(0, 0), nrow = 1),
+    matrix(c(10, 10), nrow = 1), matrix(c(-10, 10), nrow = 1), matrix(c(10, -10), nrow = 1)
+  )
+  Sigma <- diag(2); U <- diag(6)
+  expect_error(
+    test.clusters.km(X = X, U = U, Sigma = Sigma, NC = 4, clusters = c(1, 2), seed = 1, verbose = FALSE),
+    regexp = "seed"
+  )
+})
+
+# The seed value itself must be echoed in the error message, so the user
+# knows exactly which seed failed and can pick a different one.
+test_that("test.clusters.km error message reports the seed that was used", {
+  d <- make_km_data()
+  expect_error(
+    test.clusters.km(X = d$X, U = d$U, Sigma = d$Sigma, NC = d$n + 1, clusters = c(1, 2), seed = 3, verbose = FALSE),
+    regexp = "seed = 3"
+  )
+})
+
 # ---- Under the null (uniform p-values over many runs) -------------------
 
 # Under H0 (homogeneous data with no true cluster structure) the selective p-value
