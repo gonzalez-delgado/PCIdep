@@ -36,14 +36,14 @@ If you use `PCIdep`, please cite:
 
 ### The paper
 
-González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P.  
-*Post-clustering Inference under Dependence*. Journal of the American Statistical Association, 2026. <a href="https://doi.org/10.1080/01621459.2026.2707221" target="_blank">Link to paper</a>
+González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2026). 
+*Post-clustering Inference under Dependence*. Journal of the American Statistical Association, 1--13. <a href="https://doi.org/10.1080/01621459.2026.2707221" target="_blank">Link to paper</a>
 
 ### The R package
 
 González-Delgado, J. (2026).  
 *PCIdep: Post-clustering inference under dependence*.  
-R package version 0.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" target="_blank">GitHub repository</a>
+R package version 1.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" target="_blank">GitHub repository</a>
 
 <details class="citation-details">
 <summary>BibTeX</summary>
@@ -53,7 +53,7 @@ R package version 0.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" ta
   author  = {González-Delgado, Javier and Deronzier, Mathis and Cortés, Juan and Neuvial, Pierre},
   title   = {Post-clustering Inference under Dependence},
   journal = {Journal of the American Statistical Association},
-  pages = {1--25},
+  pages = {1--13},
   year = {2026},
   publisher = {Taylor \& Francis},
   doi = {10.1080/01621459.2026.2707221},
@@ -63,7 +63,7 @@ R package version 0.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" ta
   title   = {PCIdep: Post-clustering inference under dependence},
   author  = {González-Delgado, Javier},
   year    = {2026},
-  note    = {R package version 0.1.0},
+  note    = {R package version 1.0.0},
   url     = {https://github.com/gonzalez-delgado/PCIdep}
 }
 ```
