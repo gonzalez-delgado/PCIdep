@@ -43,7 +43,7 @@ González-Delgado, J., Deronzier, M. Cortés, J., and Neuvial, P. (2026).
 
 González-Delgado, J. (2026).  
 *PCIdep: Post-clustering inference under dependence*.  
-R package version 1.1.0. <a href="https://github.com/gonzalez-delgado/PCIdep" target="_blank">GitHub repository</a>
+R package version 1.0.0. <a href="https://github.com/gonzalez-delgado/PCIdep" target="_blank">GitHub repository</a>
 
 <details class="citation-details">
 <summary>BibTeX</summary>
