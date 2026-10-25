@@ -42,15 +42,15 @@ test_statistic(cl = cl, clusters = c(1, 2), X = X, U = diag(n), Sigma = diag(p))
 
 }
 \seealso{
-Other Utilities: 
-\code{\link{ARI}()},
-\code{\link{is.CS}()},
-\code{\link{preserve.cl}()},
-\code{\link{setup.model}()},
-\code{\link{validate_hc_setting}()},
-\code{\link{validate_km_candidate}()},
-\code{\link{validate_km_setting}()},
-\code{\link{validate_ndraws}()},
-\code{\link{validate_seed}()}
+Other Utilities:
+\code{\link[=ARI]{ARI()}},
+\code{\link[=is.CS]{is.CS()}},
+\code{\link[=preserve.cl]{preserve.cl()}},
+\code{\link[=setup.model]{setup.model()}},
+\code{\link[=validate_hc_setting]{validate_hc_setting()}},
+\code{\link[=validate_km_candidate]{validate_km_candidate()}},
+\code{\link[=validate_km_setting]{validate_km_setting()}},
+\code{\link[=validate_ndraws]{validate_ndraws()}},
+\code{\link[=validate_seed]{validate_seed()}}
 }
 \concept{Utilities}
