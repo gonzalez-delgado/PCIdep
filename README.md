@@ -1,4 +1,5 @@
 # PCIdep: Post-Clustering Inference under DEPendence <img src="man/figures/logo.svg" align="right" height="139" alt="" />
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21134303.svg)](https://doi.org/10.5281/zenodo.21134303)
 
 $\texttt{PCIdep}$ is an $\texttt{R}$ package to perform selective inference after clustering under a general matrix normal model, allowing for dependence structures among both observations and features. The package is the natural extension to the general dependence setting of the work in [clusterpval](https://github.com/lucylgao/clusterpval) and [KMeansInference](https://github.com/yiqunchen/KmeansInference).
 

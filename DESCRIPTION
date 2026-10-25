@@ -6,7 +6,6 @@ Description: PCIdep extends the framework introduced in the R packages clusterpv
 Encoding: UTF-8
 Imports: matrixNormal, Matrix, stats, KmeansInference, clusterpval, intervals, fastcluster, future.apply
 Remotes: lucylgao/clusterpval, yiqunchen/KmeansInference
-RoxygenNote: 7.3.3
 NeedsCompilation: no
 Packaged: 2023-01-24 12:34:47 UTC; jgonzale
 License: CeCILL-B | file LICENSE
@@ -24,3 +23,4 @@ Authors@R: c(
       email = "javier.gonzalez-delgado@ensai.fr",
       comment = c(ORCID = "0000-0003-3783-1919", GitHub = "gonzalez-delgado")
     ))
+Config/roxygen2/version: 8.1.1
